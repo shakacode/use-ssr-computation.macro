@@ -1,32 +1,21 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`macros lines: lines 1`] = `
+exports[`macros client-side: client-side 1`] = `
 
-import { lines } from "../lib/index.macro"
-const x = lines;
-
-      ↓ ↓ ↓ ↓ ↓ ↓
-
-const x = 2;
-
-
-`;
-
-exports[`macros linesIn: linesIn 1`] = `
-
-import { linesIn } from "../lib/index.macro"
-const x = linesIn("./lines.txt");
+import { useSSRComputation } from "../lib/index.macro"
+const x = useSSRComputation("index.test.ts")
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
-const x = 7;
+const x =
+  "Hello server /Users/romex/useSSRComputation.macro/tests/index.test.ts";
 
 
 `;
 
 exports[`macros no usage: no usage 1`] = `
 
-import { lines, linesIn, words, wordsIn } from "../lib/index.macro"
+import { useSSRComputation } from "../lib/index.macro"
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
@@ -34,26 +23,15 @@ import { lines, linesIn, words, wordsIn } from "../lib/index.macro"
 
 `;
 
-exports[`macros words: words 1`] = `
+exports[`macros server-side: server-side 1`] = `
 
-import { words } from "../lib/index.macro"
-const x = words;
-
-      ↓ ↓ ↓ ↓ ↓ ↓
-
-const x = 10;
-
-
-`;
-
-exports[`macros wordsIn: wordsIn 1`] = `
-
-import { wordsIn } from "../lib/index.macro"
-const x = wordsIn("./words.txt");
+import { useSSRComputation } from "../lib/index.macro"
+const x = useSSRComputation("index.test.ts")
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
-const x = 3;
+const x =
+  "Hello client /Users/romex/useSSRComputation.macro/tests/index.test.ts";
 
 
 `;

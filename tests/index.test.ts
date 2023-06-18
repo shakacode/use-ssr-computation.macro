@@ -2,28 +2,45 @@ import pluginTester from "babel-plugin-tester";
 import * as plugin from "babel-plugin-macros";
 
 pluginTester({
+  pluginOptions: {
+    useSSRComputation: {
+      side: "client",
+    },
+  },
   plugin,
   snapshot: true,
   babelOptions: {
     filename: __filename,
   },
   tests: {
-    "no usage": `import { lines, linesIn, words, wordsIn } from "../lib/index.macro"`,
-    lines: `
-import { lines } from "../lib/index.macro"
-const x = lines;
-`,
-    linesIn: `
-import { linesIn } from "../lib/index.macro"
-const x = linesIn("./lines.txt");
-`,
-    words: `
-import { words } from "../lib/index.macro"
-const x = words;
-`,
-    wordsIn: `
-import { wordsIn } from "../lib/index.macro"
-const x = wordsIn("./words.txt");
-`,
+    "no usage": `import { useSSRComputation } from "../lib/index.macro"`,
+    "server-side": `
+      import { useSSRComputation } from "../lib/index.macro"
+      const x = useSSRComputation("index.test.ts")
+    `,
+  },
+});
+
+pluginTester({
+  beforeAll: () => {
+    process.env['HEEH'] = 'CLIENT_SIDE';
+  },
+  pluginOptions: {
+    useSSRComputation: {
+      side: "server",
+    },
+  },
+
+  plugin,
+  restartTitleNumbering: true,
+  snapshot: true,
+  babelOptions: {
+    filename: __filename,
+  },
+  tests: {
+    "client-side": `
+      import { useSSRComputation } from "../lib/index.macro"
+      const x = useSSRComputation("index.test.ts")
+    `,
   },
 });
