@@ -40,7 +40,6 @@ const macro: MacroHandler = ({ references, state, babel }) => {
     return contents;
   };
 
-
   (references.useSSRComputation || []).map((nodePath: NodePath) => {
     const parent = nodePath.parent;
     if (t.isCallExpression(parent)) {
@@ -60,12 +59,19 @@ const macro: MacroHandler = ({ references, state, babel }) => {
 
       console.log( true || readFile(absolutePath));
 
-      nodePath.parentPath.replaceWith(t.stringLiteral(`Hello ${side} ${absolutePath}`));
+      const functionName = `useSSRComputation${side.charAt(0).toUpperCase() + side.slice(1)}`; 
+      parent.callee = t.identifier(`${functionName}`);
+
+      // Create a new import statement and add it to the top of the file.
+      const useSSRComputationImport = t.importDeclaration(
+        [t.importSpecifier(t.identifier(functionName), t.identifier(functionName))],
+        t.stringLiteral(`../lib/useSSRComputation`),
+      );      
+      nodePath.hub.file.path.unshiftContainer('body', useSSRComputationImport);
     }
   });
 
 };
-
 
 export const useSSRComputation: (filename: string, ) => number = null as any;
 

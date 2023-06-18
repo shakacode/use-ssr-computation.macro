@@ -1,5 +1,5 @@
 import pluginTester from "babel-plugin-tester";
-import * as plugin from "babel-plugin-macros";
+import plugin from "babel-plugin-macros";
 
 pluginTester({
   pluginOptions: {
@@ -17,6 +17,11 @@ pluginTester({
     "server-side": `
       import { useSSRComputation } from "../lib/index.macro"
       const x = useSSRComputation("index.test.ts")
+    `,
+    "multiple-imports": `
+      import { useSSRComputation } from "../lib/index.macro"
+      const x = useSSRComputation("index.test.ts")
+      const y = useSSRComputation("yarn.lock")
     `,
   },
 });

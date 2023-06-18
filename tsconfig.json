@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "jsx": "react",
     "rootDir": "src",
     "outDir": "lib",
     "target": "es5",
@@ -13,7 +14,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitAny": false,
-    "strict": true
+    "strict": true,
+    "esModuleInterop": true,
   },
   "include": ["src", "typings"]
 }

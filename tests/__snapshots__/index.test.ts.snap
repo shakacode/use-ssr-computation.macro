@@ -7,8 +7,24 @@ const x = useSSRComputation("index.test.ts")
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
-const x =
-  "Hello server /Users/romex/useSSRComputation.macro/tests/index.test.ts";
+import { useSSRComputationServer } from "../lib/useSSRComputation";
+const x = useSSRComputationServer("index.test.ts");
+
+
+`;
+
+exports[`macros multiple-imports: multiple-imports 1`] = `
+
+import { useSSRComputation } from "../lib/index.macro"
+const x = useSSRComputation("index.test.ts")
+const y = useSSRComputation("yarn.lock")
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { useSSRComputationClient } from "../lib/useSSRComputation";
+import { useSSRComputationClient } from "../lib/useSSRComputation";
+const x = useSSRComputationClient("index.test.ts");
+const y = useSSRComputationClient("yarn.lock");
 
 
 `;
@@ -30,8 +46,8 @@ const x = useSSRComputation("index.test.ts")
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
-const x =
-  "Hello client /Users/romex/useSSRComputation.macro/tests/index.test.ts";
+import { useSSRComputationClient } from "../lib/useSSRComputation";
+const x = useSSRComputationClient("index.test.ts");
 
 
 `;
