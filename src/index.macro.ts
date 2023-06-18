@@ -4,14 +4,22 @@ import * as path from "path";
 import * as fs from "fs";
 import * as t from "@babel/types";
 
-function addImportStatement(importName: string, importPath: string, nodePath: NodePath) {
+function addImportStatement(importName: string, importPath: string, isDefault: boolean, nodePath: NodePath) {
   const existingImportDeclaration = nodePath.hub.file.path.node.body.find(
     p => t.isImportDeclaration(p) && p.source.value === importPath
   );
 
   if (!existingImportDeclaration) {
+    let importDeclarator;
+
+    if(isDefault) {
+      importDeclarator = t.importDefaultSpecifier(t.identifier(importName));
+    } else {
+      importDeclarator = t.importSpecifier(t.identifier(importName), t.identifier(importName));
+    }
+
     const newImportDeclaration = t.importDeclaration(
-      [t.importSpecifier(t.identifier(importName), t.identifier(importName))],
+      [importDeclarator],
       t.stringLiteral(importPath),
     );      
     nodePath.hub.file.path.unshiftContainer('body', newImportDeclaration);
@@ -39,19 +47,19 @@ const macro: MacroHandler = ({ references, state }) => {
   }
   const side : 'client' | 'server' = opts?.side;
 
-  const contentsCache: { [filename: string]: string } = {
-    "/": state.file.code,
-  };
+  // const contentsCache: { [filename: string]: string } = {
+  //   "/": state.file.code,
+  // };
 
-  const readFile = (filename: string): string => {
-    let contents = contentsCache[filename];
-    if (contents == null) {
-      contents = fs.readFileSync(filename, "utf-8");
-      contentsCache[filename] = contents;
-    }
+  // const readFile = (filename: string): string => {
+  //   let contents = contentsCache[filename];
+  //   if (contents == null) {
+  //     contents = fs.readFileSync(filename, "utf-8");
+  //     contentsCache[filename] = contents;
+  //   }
 
-    return contents;
-  };
+  //   return contents;
+  // };
 
   (references.useSSRComputation || []).map((nodePath: NodePath) => {
     const parent = nodePath.parent;
@@ -62,7 +70,7 @@ const macro: MacroHandler = ({ references, state }) => {
 
       const filenameNode = parent.arguments[0];
       if (!t.isStringLiteral(filenameNode)) {
-        throw new Error("Argument to linesIn must be a string literal");
+        throw new Error("The first argument must be a path to an existing ts file.");
       }
 
       const absolutePath = path.resolve(
@@ -70,11 +78,14 @@ const macro: MacroHandler = ({ references, state }) => {
         filenameNode.value,
       );
 
-      console.log( true || readFile(absolutePath));
+      // throw an error if the file doesn't exist
+      if (!fs.existsSync(absolutePath + '.ts') && !fs.existsSync(absolutePath + '.js')) {
+        throw new Error(`The file ${absolutePath} does not exist.`);
+      }
 
       const useSSRComputationFunctionName = `useSSRComputation${side.charAt(0).toUpperCase() + side.slice(1)}`; 
       parent.callee = t.identifier(useSSRComputationFunctionName);
-      addImportStatement(useSSRComputationFunctionName, `use-ssr-computation/lib/useSSRComputation`, nodePath);
+      addImportStatement(useSSRComputationFunctionName, `use-ssr-computation/lib/useSSRComputation`, false, nodePath);
       
       if (side === 'server')
       {
@@ -87,7 +98,7 @@ const macro: MacroHandler = ({ references, state }) => {
         fileName = fileName.replace(delimeter, '');
         fileName = fileName.replace(/[^a-zA-Z0-9]/g, '_');
 
-        addImportStatement(fileName, filenameNode.value, nodePath);
+        addImportStatement(fileName, filenameNode.value, true, nodePath);
       }
     }
   });
