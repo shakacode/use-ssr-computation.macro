@@ -3,12 +3,13 @@
 exports[`macros client-side: client-side 1`] = `
 
 import { useSSRComputation } from "../lib/index.macro"
-const x = useSSRComputation("index.test.ts")
+const x = useSSRComputation("./a.ssr-computation")
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
-import { useSSRComputationServer } from "../lib/useSSRComputation";
-const x = useSSRComputationServer("index.test.ts");
+import { __a } from "./a.ssr-computation";
+import { useSSRComputationServer } from "use-ssr-computation/lib/useSSRComputation";
+const x = useSSRComputationServer("./a.ssr-computation");
 
 
 `;
@@ -16,15 +17,14 @@ const x = useSSRComputationServer("index.test.ts");
 exports[`macros multiple-imports: multiple-imports 1`] = `
 
 import { useSSRComputation } from "../lib/index.macro"
-const x = useSSRComputation("index.test.ts")
-const y = useSSRComputation("yarn.lock")
+const x = useSSRComputation("./a.ssr-computation")
+const y = useSSRComputation("./a.ssr-computation")
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
-import { useSSRComputationClient } from "../lib/useSSRComputation";
-import { useSSRComputationClient } from "../lib/useSSRComputation";
-const x = useSSRComputationClient("index.test.ts");
-const y = useSSRComputationClient("yarn.lock");
+import { useSSRComputationClient } from "use-ssr-computation/lib/useSSRComputation";
+const x = useSSRComputationClient("./a.ssr-computation");
+const y = useSSRComputationClient("./a.ssr-computation");
 
 
 `;
@@ -42,12 +42,12 @@ import { useSSRComputation } from "../lib/index.macro"
 exports[`macros server-side: server-side 1`] = `
 
 import { useSSRComputation } from "../lib/index.macro"
-const x = useSSRComputation("index.test.ts")
+const x = useSSRComputation("./a.ssr-computation");
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
-import { useSSRComputationClient } from "../lib/useSSRComputation";
-const x = useSSRComputationClient("index.test.ts");
+import { useSSRComputationClient } from "use-ssr-computation/lib/useSSRComputation";
+const x = useSSRComputationClient("./a.ssr-computation");
 
 
 `;

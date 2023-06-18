@@ -2,10 +2,23 @@ import { createMacro, MacroHandler } from "babel-plugin-macros";
 import { NodePath } from "@babel/core";
 import * as path from "path";
 import * as fs from "fs";
+import * as t from "@babel/types";
 
-const macro: MacroHandler = ({ references, state, babel }) => {
-  const t = babel.types;
-  
+function addImportStatement(importName: string, importPath: string, nodePath: NodePath) {
+  const existingImportDeclaration = nodePath.hub.file.path.node.body.find(
+    p => t.isImportDeclaration(p) && p.source.value === importPath
+  );
+
+  if (!existingImportDeclaration) {
+    const newImportDeclaration = t.importDeclaration(
+      [t.importSpecifier(t.identifier(importName), t.identifier(importName))],
+      t.stringLiteral(importPath),
+    );      
+    nodePath.hub.file.path.unshiftContainer('body', newImportDeclaration);
+  }
+}
+
+const macro: MacroHandler = ({ references, state }) => {
   const currentFilename = state.file.opts.filename;
 
   const opts = state.opts.useSSRComputation;
@@ -59,15 +72,23 @@ const macro: MacroHandler = ({ references, state, babel }) => {
 
       console.log( true || readFile(absolutePath));
 
-      const functionName = `useSSRComputation${side.charAt(0).toUpperCase() + side.slice(1)}`; 
-      parent.callee = t.identifier(`${functionName}`);
+      const useSSRComputationFunctionName = `useSSRComputation${side.charAt(0).toUpperCase() + side.slice(1)}`; 
+      parent.callee = t.identifier(useSSRComputationFunctionName);
+      addImportStatement(useSSRComputationFunctionName, `use-ssr-computation/lib/useSSRComputation`, nodePath);
+      
+      if (side === 'server')
+      {
+        let fileName = filenameNode.value;
+        const delimeter = '.ssr-computation';
+        if (!fileName.endsWith('.ssr-computation')) {
+          throw new Error(`The file ${fileName} must have the extension ${delimeter} to be used in useSSRComputation`);
+        }
 
-      // Create a new import statement and add it to the top of the file.
-      const useSSRComputationImport = t.importDeclaration(
-        [t.importSpecifier(t.identifier(functionName), t.identifier(functionName))],
-        t.stringLiteral(`../lib/useSSRComputation`),
-      );      
-      nodePath.hub.file.path.unshiftContainer('body', useSSRComputationImport);
+        fileName = fileName.replace(delimeter, '');
+        fileName = fileName.replace(/[^a-zA-Z0-9]/g, '_');
+
+        addImportStatement(fileName, filenameNode.value, nodePath);
+      }
     }
   });
 

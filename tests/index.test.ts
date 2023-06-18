@@ -16,12 +16,12 @@ pluginTester({
     "no usage": `import { useSSRComputation } from "../lib/index.macro"`,
     "server-side": `
       import { useSSRComputation } from "../lib/index.macro"
-      const x = useSSRComputation("index.test.ts")
+      const x = useSSRComputation("./a.ssr-computation");
     `,
     "multiple-imports": `
       import { useSSRComputation } from "../lib/index.macro"
-      const x = useSSRComputation("index.test.ts")
-      const y = useSSRComputation("yarn.lock")
+      const x = useSSRComputation("./a.ssr-computation")
+      const y = useSSRComputation("./a.ssr-computation")
     `,
   },
 });
@@ -45,7 +45,7 @@ pluginTester({
   tests: {
     "client-side": `
       import { useSSRComputation } from "../lib/index.macro"
-      const x = useSSRComputation("index.test.ts")
+      const x = useSSRComputation("./a.ssr-computation")
     `,
   },
 });
