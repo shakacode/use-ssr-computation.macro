@@ -9,7 +9,7 @@ const x = useSSRComputation("./a.ssr-computation")
 
 import __a from "./a.ssr-computation";
 import { useSSRComputationServer } from "use-ssr-computation/lib/useSSRComputation";
-const x = useSSRComputationServer("./a.ssr-computation");
+const x = useSSRComputationServer(__a, "./a.ssr-computation");
 
 
 `;

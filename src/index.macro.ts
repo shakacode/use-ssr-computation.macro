@@ -89,16 +89,19 @@ const macro: MacroHandler = ({ references, state }) => {
       
       if (side === 'server')
       {
-        let fileName = filenameNode.value;
+        let importedFunctionName = filenameNode.value;
         const delimeter = '.ssr-computation';
-        if (!fileName.endsWith('.ssr-computation')) {
-          throw new Error(`The file ${fileName} must have the extension ${delimeter} to be used in useSSRComputation`);
+        if (!importedFunctionName.endsWith('.ssr-computation')) {
+          throw new Error(`The file ${importedFunctionName} must have the extension ${delimeter} to be used in useSSRComputation`);
         }
 
-        fileName = fileName.replace(delimeter, '');
-        fileName = fileName.replace(/[^a-zA-Z0-9]/g, '_');
+        importedFunctionName = importedFunctionName.replace(delimeter, '');
+        importedFunctionName = importedFunctionName.replace(/[^a-zA-Z0-9]/g, '_');
 
-        addImportStatement(fileName, filenameNode.value, true, nodePath);
+        addImportStatement(importedFunctionName, filenameNode.value, true, nodePath);
+
+        const identifier = t.identifier(importedFunctionName);
+        parent.arguments.unshift(identifier);
       }
     }
   });
