@@ -5,7 +5,12 @@ import * as fs from "fs";
 import * as t from "@babel/types";
 
 function addImportStatement(importName: string, importPath: string, isDefault: boolean, nodePath: NodePath) {
-  const existingImportDeclaration = nodePath.hub.file.path.node.body.find(
+  const programPath = nodePath.findParent((path) => path.isProgram());
+  if (!programPath || !t.isProgram(programPath.node)) {
+    throw new Error("Could not find program path");
+  }
+
+  const existingImportDeclaration = programPath.node.body.find(
     p => t.isImportDeclaration(p) && p.source.value === importPath
   );
 
@@ -22,14 +27,25 @@ function addImportStatement(importName: string, importPath: string, isDefault: b
       [importDeclarator],
       t.stringLiteral(importPath),
     );      
-    nodePath.hub.file.path.unshiftContainer('body', newImportDeclaration);
+    programPath.node.body.unshift(newImportDeclaration);
   }
+}
+
+interface PluginOptions {
+  useSSRComputation: {
+    side: 'client' | 'server';
+  };
 }
 
 const macro: MacroHandler = ({ references, state }) => {
   const currentFilename = state.file.opts.filename;
+  if (!currentFilename) {
+    throw new Error("useSSRComputation is called without filename");
+  }
 
-  const opts = state.opts.useSSRComputation;
+  const pluginOptions = state.opts as PluginOptions;
+
+  const opts = pluginOptions?.useSSRComputation;
   if (!opts || (opts.side !== 'client' && opts.side !== 'server')) {
     throw new Error(`The "side" option must be specified in babel-plugin-macros config in babel.config.js:
       plugins: [
