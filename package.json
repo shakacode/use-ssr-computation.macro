@@ -4,7 +4,7 @@
   "main": "lib/index.macro.js",
   "license": "MIT",
   "scripts": {
-    "build": "tsc -p .",
+    "build": "tsc -p ./tsconfig-macro.json && tsc -p ./tsconfig-runtime.json",
     "build:watch": "yarpm build --watch",
     "test": "jest",
     "compile-example": "yarn clear:babel-cache && babel --plugins=babel-plugin-macros --presets=@babel/preset-typescript example/index.ts",

@@ -13,4 +13,7 @@ export const SSRCacheProvider = ({ children, cache }: { children: JSX.Element | 
   return <Context.Provider value={cacheValue}>{children}</Context.Provider>;
 }
 
-export const useSSRCache = () => React.useContext(Context);
+export const useSSRCache = () => {
+  console.log(typeof React, typeof Context, typeof React.useContext);
+  return React.useContext(Context);
+} 

@@ -78,14 +78,14 @@ const macro: MacroHandler = ({ references, state }) => {
         filenameNode.value,
       );
 
-      // throw an error if the file doesn't exist
-      if (!fs.existsSync(absolutePath + '.ts') && !fs.existsSync(absolutePath + '.js')) {
-        throw new Error(`The file ${absolutePath} does not exist.`);
+      const extensions = ['.ts', '.js', '.tsx', '.jsx'];
+      if (!extensions.some(extension => fs.existsSync(absolutePath + extension))) {
+        throw new Error(`The file ${filenameNode}(.js/.ts/.jsx/.tsx) does not exist.`);
       }
 
-      const useSSRComputationFunctionName = `useSSRComputation${side.charAt(0).toUpperCase() + side.slice(1)}`; 
+      const useSSRComputationFunctionName = `useSSRComputation_${side.charAt(0).toUpperCase() + side.slice(1)}`; 
       parent.callee = t.identifier(useSSRComputationFunctionName);
-      addImportStatement(useSSRComputationFunctionName, `use-ssr-computation/lib/useSSRComputation`, false, nodePath);
+      addImportStatement(useSSRComputationFunctionName, `use-ssr-computation.macro/lib/runtime/useSSRComputation`, false, nodePath);
       
       if (side === 'server')
       {
