@@ -101,7 +101,7 @@ const macro: MacroHandler = ({ references, state }) => {
 
       const useSSRComputationFunctionName = `useSSRComputation_${side.charAt(0).toUpperCase() + side.slice(1)}`; 
       parent.callee = t.identifier(useSSRComputationFunctionName);
-      addImportStatement(useSSRComputationFunctionName, `use-ssr-computation.macro/lib/runtime/useSSRComputation`, false, nodePath);
+      addImportStatement(useSSRComputationFunctionName, `use-ssr-computation.runtime/lib/${useSSRComputationFunctionName}`, true, nodePath);
       
       if (side === 'server')
       {
@@ -118,6 +118,11 @@ const macro: MacroHandler = ({ references, state }) => {
 
         const identifier = t.identifier(importedFunctionName);
         parent.arguments.unshift(identifier);
+      } else {
+        const dynamicImportExpression = t.arrowFunctionExpression([], 
+          t.callExpression(t.import(), [t.stringLiteral(filenameNode.value)])
+        );
+        parent.arguments.unshift(dynamicImportExpression);
       }
     }
   });

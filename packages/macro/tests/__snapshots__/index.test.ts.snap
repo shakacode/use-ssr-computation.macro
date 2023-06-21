@@ -10,7 +10,7 @@ const x = useSSRComputation("./a.ssr-computation")
       ↓ ↓ ↓ ↓ ↓ ↓
 
 import __a from "./a.ssr-computation";
-import { useSSRComputation_Server } from "use-ssr-computation.macro/lib/runtime/useSSRComputation";
+import useSSRComputation_Server from "use-ssr-computation.runtime/lib/useSSRComputation_Server";
 const x = useSSRComputation_Server(__a, "./a.ssr-computation");
 
 `;
@@ -34,8 +34,11 @@ const x = useSSRComputation("./a.ssr-computation");
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
-import { useSSRComputation_Client } from "use-ssr-computation.macro/lib/runtime/useSSRComputation";
-const x = useSSRComputation_Client("./a.ssr-computation");
+import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
+const x = useSSRComputation_Client(
+  () => import("./a.ssr-computation"),
+  "./a.ssr-computation",
+);
 
 `;
 
@@ -49,8 +52,14 @@ const y = useSSRComputation("./a.ssr-computation")
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
-import { useSSRComputation_Client } from "use-ssr-computation.macro/lib/runtime/useSSRComputation";
-const x = useSSRComputation_Client("./a.ssr-computation");
-const y = useSSRComputation_Client("./a.ssr-computation");
+import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
+const x = useSSRComputation_Client(
+  () => import("./a.ssr-computation"),
+  "./a.ssr-computation",
+);
+const y = useSSRComputation_Client(
+  () => import("./a.ssr-computation"),
+  "./a.ssr-computation",
+);
 
 `;
