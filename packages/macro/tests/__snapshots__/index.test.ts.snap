@@ -9,9 +9,11 @@ const x = useSSRComputation("./a.ssr-computation")
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
-import __a from "./a.ssr-computation";
-import useSSRComputation_Server from "use-ssr-computation.runtime/lib/useSSRComputation_Server";
-const x = useSSRComputation_Server(__a, "./a.ssr-computation");
+import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
+const x = useSSRComputation_Client(
+  () => import("./a.ssr-computation"),
+  "./a.ssr-computation",
+);
 
 `;
 
@@ -25,29 +27,12 @@ import { useSSRComputation } from "../lib/index.macro"
 
 `;
 
-exports[`macros 2. server-side: 2. server-side 1`] = `
-
-
-import { useSSRComputation } from "../lib/index.macro"
-const x = useSSRComputation("./a.ssr-computation");
-    
-
-      ↓ ↓ ↓ ↓ ↓ ↓
-
-import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
-const x = useSSRComputation_Client(
-  () => import("./a.ssr-computation"),
-  "./a.ssr-computation",
-);
-
-`;
-
-exports[`macros 3. multiple-imports: 3. multiple-imports 1`] = `
+exports[`macros 2. multiple-imports-client-side: 2. multiple-imports-client-side 1`] = `
 
 
 import { useSSRComputation } from "../lib/index.macro"
 const x = useSSRComputation("./a.ssr-computation")
-const y = useSSRComputation("./a.ssr-computation")
+const y = useSSRComputation("./b.ssr-computation")
     
 
       ↓ ↓ ↓ ↓ ↓ ↓
@@ -58,8 +43,41 @@ const x = useSSRComputation_Client(
   "./a.ssr-computation",
 );
 const y = useSSRComputation_Client(
-  () => import("./a.ssr-computation"),
-  "./a.ssr-computation",
+  () => import("./b.ssr-computation"),
+  "./b.ssr-computation",
 );
+
+`;
+
+exports[`macros 2. server-side: 2. server-side 1`] = `
+
+
+import { useSSRComputation } from "../lib/index.macro"
+const x = useSSRComputation("./a.ssr-computation");
+    
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import __a from "./a.ssr-computation";
+import useSSRComputation_Server from "use-ssr-computation.runtime/lib/useSSRComputation_Server";
+const x = useSSRComputation_Server(__a, "./a.ssr-computation");
+
+`;
+
+exports[`macros 3. multiple-imports-server-side: 3. multiple-imports-server-side 1`] = `
+
+
+import { useSSRComputation } from "../lib/index.macro"
+const x = useSSRComputation("./a.ssr-computation")
+const y = useSSRComputation("./b.ssr-computation")
+    
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import __b from "./b.ssr-computation";
+import __a from "./a.ssr-computation";
+import useSSRComputation_Server from "use-ssr-computation.runtime/lib/useSSRComputation_Server";
+const x = useSSRComputation_Server(__a, "./a.ssr-computation");
+const y = useSSRComputation_Server(__b, "./b.ssr-computation");
 
 `;

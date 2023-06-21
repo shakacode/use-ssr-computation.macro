@@ -4,7 +4,7 @@ const plugin = require("babel-plugin-macros");
 pluginTester({
   pluginOptions: {
     useSSRComputation: {
-      side: "client",
+      side: "server",
     },
   },
   plugin,
@@ -18,10 +18,10 @@ pluginTester({
       import { useSSRComputation } from "../lib/index.macro"
       const x = useSSRComputation("./a.ssr-computation");
     `,
-    "multiple-imports": `
+    "multiple-imports-server-side": `
       import { useSSRComputation } from "../lib/index.macro"
       const x = useSSRComputation("./a.ssr-computation")
-      const y = useSSRComputation("./a.ssr-computation")
+      const y = useSSRComputation("./b.ssr-computation")
     `,
   },
 });
@@ -32,7 +32,7 @@ pluginTester({
   },
   pluginOptions: {
     useSSRComputation: {
-      side: "server",
+      side: "client",
     },
   },
 
@@ -46,6 +46,11 @@ pluginTester({
     "client-side": `
       import { useSSRComputation } from "../lib/index.macro"
       const x = useSSRComputation("./a.ssr-computation")
+    `,
+    "multiple-imports-client-side": `
+      import { useSSRComputation } from "../lib/index.macro"
+      const x = useSSRComputation("./a.ssr-computation")
+      const y = useSSRComputation("./b.ssr-computation")
     `,
   },
 });
