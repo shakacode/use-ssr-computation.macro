@@ -1,20 +1,11 @@
 {
-  "name": "use-ssr-computation.macro",
+  "name": "use-ssr-computation",
   "version": "1.0.3",
-  "main": "lib/index.macro.js",
   "license": "MIT",
   "scripts": {
-    "build": "tsc -p ./tsconfig-macro.json && tsc -p ./tsconfig-runtime.json",
-    "build:watch": "yarpm build --watch",
-    "test": "jest",
-    "compile-example": "yarn clear:babel-cache && babel --plugins=babel-plugin-macros --presets=@babel/preset-typescript example/index.ts",
-    "clear:babel-cache": "rimraf -rf ./node_modules/.cache/babel-loader/*",
-    "clean": "rimraf lib",
-    "prepublishOnly": "yarpm clean && yarpm build"
+    "publish": "lerna publish",
+    "yalc": "cd packages/macro && yalc publish && cd ../runtime && yalc publish"
   },
-  "files": [
-    "lib"
-  ],
   "homepage": "https://github.com/Popmenu/use-ssr-computation.macro",
   "bugs": {
     "url": "https://github.com/Popmenu/use-ssr-computation.macro/issues"
@@ -24,10 +15,6 @@
     "url": "https://github.com/Popmenu/use-ssr-computation.macro.git"
   },
   "author": "Roman Kuksin <rkuksin.cpp@gmail.com>",
-  "dependencies": {
-  },
-  "devDependencies": {
-  },
   "keywords": [
     "SSR",
     "performance",
@@ -35,5 +22,13 @@
     "macro",
     "javascript",
     "typescript"
-  ]
+  ],
+  "private": true,
+  "workspaces": [
+    "packages/macro",
+    "packages/runtime"
+  ],
+  "devDependencies": {
+    "lerna": "^7.0.2"
+  }
 }

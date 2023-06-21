@@ -25,8 +25,7 @@
   },
   "author": "Roman Kuksin <rkuksin.cpp@gmail.com>",
   "dependencies": {
-    "babel-plugin-macros": "^3.0.0",
-    "react": "^18.2.0"
+    "babel-plugin-macros": "^3.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
