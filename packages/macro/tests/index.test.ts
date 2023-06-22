@@ -52,5 +52,9 @@ pluginTester({
       const x = useSSRComputation("./a.ssr-computation")
       const y = useSSRComputation("./b.ssr-computation")
     `,
+    "custom-wepback-chunk-client-side": `
+    import { useSSRComputation } from "../lib/index.macro"
+    const x = useSSRComputation("./a.ssr-computation", "custom-chunk-name")
+  `,
   },
 });

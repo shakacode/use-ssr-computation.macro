@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useSSRCache } from "./SSRCacheProvider";
 
 export default function useSSRComputation_Client(importFn: () => Promise<{ default: () => any }>, modulePath: string) {
-  console.log("Hello from client");
-
   const [fn, setFn] = useState<()=>any>();
   const cache = useSSRCache();
 

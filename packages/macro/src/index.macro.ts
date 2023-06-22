@@ -80,14 +80,16 @@ const macro: MacroHandler = ({ references, state }) => {
   (references.useSSRComputation || []).map((nodePath: NodePath) => {
     const parent = nodePath.parent;
     if (t.isCallExpression(parent)) {
-      if (parent.arguments.length !== 1) {
-        throw new Error("Can only call linesIn with a single string argument");
+      if (parent.arguments.length < 1) { 
+        throw new Error("useSSRComputation must be called with at least one arguments: a path to a .ssr-computation.js file containing the definition of the funciton.");
       }
-
+  
       const filenameNode = parent.arguments[0];
+      const webpackChunkNameNode = parent.arguments[1];
       if (!t.isStringLiteral(filenameNode)) {
         throw new Error("The first argument must be a path to an existing ts file.");
       }
+      const webpackChunkName = (webpackChunkNameNode && t.isStringLiteral(webpackChunkNameNode) ? webpackChunkNameNode.value : 'default') + '-ssr-computations';
 
       const absolutePath = path.resolve(
         path.dirname(currentFilename),
@@ -119,8 +121,16 @@ const macro: MacroHandler = ({ references, state }) => {
         const identifier = t.identifier(importedFunctionName);
         parent.arguments.unshift(identifier);
       } else {
-        const dynamicImportExpression = t.arrowFunctionExpression([], 
-          t.callExpression(t.import(), [t.stringLiteral(filenameNode.value)])
+        const importString = t.stringLiteral(filenameNode.value);
+        importString.leadingComments = [
+          {
+            type: 'CommentBlock',
+            value: ` webpackChunkName: "${webpackChunkName}" `
+          }
+        ];
+
+        const dynamicImportExpression = t.arrowFunctionExpression([],
+          t.callExpression(t.import(), [importString])
         );
         parent.arguments.unshift(dynamicImportExpression);
       }
@@ -129,7 +139,7 @@ const macro: MacroHandler = ({ references, state }) => {
 
 };
 
-export const useSSRComputation: (filename: string, ) => number = null as any;
+export const useSSRComputation: (filename: string, webpackChunkName?: string ) => number = null as any;
 
 export default createMacro(macro, {
   configName: "useSSRComputation",

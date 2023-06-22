@@ -11,7 +11,10 @@ const x = useSSRComputation("./a.ssr-computation")
 
 import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
 const x = useSSRComputation_Client(
-  () => import("./a.ssr-computation"),
+  () =>
+    import(
+      /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
+    ),
   "./a.ssr-computation",
 );
 
@@ -39,11 +42,17 @@ const y = useSSRComputation("./b.ssr-computation")
 
 import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
 const x = useSSRComputation_Client(
-  () => import("./a.ssr-computation"),
+  () =>
+    import(
+      /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
+    ),
   "./a.ssr-computation",
 );
 const y = useSSRComputation_Client(
-  () => import("./b.ssr-computation"),
+  () =>
+    import(
+      /* webpackChunkName: "default-ssr-computations" */ "./b.ssr-computation"
+    ),
   "./b.ssr-computation",
 );
 
@@ -61,6 +70,27 @@ const x = useSSRComputation("./a.ssr-computation");
 import __a from "./a.ssr-computation";
 import useSSRComputation_Server from "use-ssr-computation.runtime/lib/useSSRComputation_Server";
 const x = useSSRComputation_Server(__a, "./a.ssr-computation");
+
+`;
+
+exports[`macros 3. custom-wepback-chunk-client-side: 3. custom-wepback-chunk-client-side 1`] = `
+
+
+import { useSSRComputation } from "../lib/index.macro"
+const x = useSSRComputation("./a.ssr-computation", "custom-chunk-name")
+  
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
+const x = useSSRComputation_Client(
+  () =>
+    import(
+      /* webpackChunkName: "custom-chunk-name-ssr-computations" */ "./a.ssr-computation"
+    ),
+  "./a.ssr-computation",
+  "custom-chunk-name",
+);
 
 `;
 
