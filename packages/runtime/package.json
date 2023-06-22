@@ -22,11 +22,11 @@
     "url": "https://github.com/Popmenu/use-ssr-computation.macro.git"
   },
   "author": "Roman Kuksin <rkuksin.cpp@gmail.com>",
-  "dependencies": {
-    "react": "^18.2.0"
+  "peerDependencies": {
+    "react": "^17"
   },
   "devDependencies": {
-    "@types/react": "^18.2.12",
+    "@types/react": "^17",
     "rimraf": "^3.0.2",
     "tslint": "^5.20.1",
     "typescript": "^5.1.3",
