@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSSRCache } from "./SSRCacheProvider";
+import { calculateCacheKey } from "./utils";
 
-export default function useSSRComputation_Client(importFn: () => Promise<{ default: () => any }>, modulePath: string) {
+export default function useSSRComputation_Client(importFn: () => Promise<{ default: () => any }>, modulePath: string, dependencies: any[]) {
   const [fn, setFn] = useState<()=>any>();
   const cache = useSSRCache();
 
-  const isCacheHit = cache?.[modulePath];
+  const cacheKey = calculateCacheKey(modulePath, dependencies);
+  const isCacheHit = cache?.[cacheKey];
   useEffect(() => {
     if (isCacheHit) return;
 
@@ -20,7 +22,7 @@ export default function useSSRComputation_Client(importFn: () => Promise<{ defau
     return () => {
       isMounted = false;
     };
-  }, [isCacheHit, modulePath, importFn]);
+  }, [isCacheHit, importFn]);
 
   const result = useMemo(()=> {
     if (!fn) return null;
@@ -29,7 +31,7 @@ export default function useSSRComputation_Client(importFn: () => Promise<{ defau
   }, [fn]);
 
   if (isCacheHit) {
-    return cache[modulePath];
+    return cache[cacheKey];
   }
 
   return result;
