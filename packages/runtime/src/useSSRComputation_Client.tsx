@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSSRCache } from "./SSRCacheProvider";
-import { calculateCacheKey } from "./utils";
+import { calculateCacheKey, Dependency, isDependency } from "./utils";
 
 export default function useSSRComputation_Client(importFn: () => Promise<{ default: () => any }>, modulePath: string, dependencies: any[]) {
   const [fn, setFn] = useState<()=>any>();
   const cache = useSSRCache();
 
-  const cacheKey = calculateCacheKey(modulePath, dependencies);
+  const parsedDependencies = dependencies.map((dependency) => {
+    if (isDependency(dependency)) {
+      return dependency;
+    }
+    throw new Error(`useSSRComputation: dependency ${dependency} is not a valid dependency object`);
+  }) as Dependency[];
+
+  const cacheKey = calculateCacheKey(modulePath, parsedDependencies);
   const isCacheHit = cache?.[cacheKey];
   useEffect(() => {
     if (isCacheHit) return;
