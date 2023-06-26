@@ -37,6 +37,33 @@ interface PluginOptions {
   };
 }
 
+export type Options = {
+  webpackChunkName?: string;
+}
+
+function parseToOptions(optionsNode: t.ObjectExpression): Options {
+  if (optionsNode.properties.length === 0) {
+    return {};
+  }
+
+  if (optionsNode.properties.length > 1) {
+    throw new Error("The third argument must be an options object with only the 'webpackChunkName' property.");
+  }
+
+  const webpackChunkNameProperty = optionsNode.properties[0];
+  if (!t.isObjectProperty(webpackChunkNameProperty) || !t.isIdentifier(webpackChunkNameProperty.key) || webpackChunkNameProperty.key.name !== 'webpackChunkName') {
+    throw new Error("The third argument must be an options object with only the 'webpackChunkName' property.");
+  }
+
+  if (!t.isStringLiteral(webpackChunkNameProperty.value)) {
+    throw new Error("The 'webpackChunkName' property must be a string literal.");
+  }
+
+  return {
+    webpackChunkName: webpackChunkNameProperty.value.value,
+  };
+}
+
 const macro: MacroHandler = ({ references, state }) => {
   const currentFilename = state.file.opts.filename;
   if (!currentFilename) {
@@ -80,16 +107,28 @@ const macro: MacroHandler = ({ references, state }) => {
   (references.useSSRComputation || []).map((nodePath: NodePath) => {
     const parent = nodePath.parent;
     if (t.isCallExpression(parent)) {
-      if (parent.arguments.length < 1) { 
-        throw new Error("useSSRComputation must be called with at least one arguments: a path to a .ssr-computation.js file containing the definition of the funciton.");
+      if (parent.arguments.length < 2) { 
+        throw new Error("useSSRComputation must be called with at least two arguments: a path to a .ssr-computation.js file containing the definition of the funciton and array of dependencies.");
+      }
+
+      if (parent.arguments.length > 3) {
+        throw new Error("useSSRComputation must be called with at most three arguments: a path to a .ssr-computation.js file containing the definition of the funciton, array of dependencies and options object.");
       }
   
       const filenameNode = parent.arguments[0];
-      const webpackChunkNameNode = parent.arguments[1];
+      const optionsNode = parent.arguments.length === 3 ? parent.arguments.pop() : t.objectExpression([]);
+
       if (!t.isStringLiteral(filenameNode)) {
         throw new Error("The first argument must be a path to an existing ts file.");
       }
-      const webpackChunkName = (webpackChunkNameNode && t.isStringLiteral(webpackChunkNameNode) ? webpackChunkNameNode.value : 'default') + '-ssr-computations';
+
+      // Check and parse options
+      if (!t.isObjectExpression(optionsNode)) {
+        throw new Error("The third argument must be an options object.");
+      }
+      const options = parseToOptions(optionsNode);
+
+      const webpackChunkName = (options.webpackChunkName ? options.webpackChunkName : 'default') + '-ssr-computations';
 
       const absolutePath = path.resolve(
         path.dirname(currentFilename),

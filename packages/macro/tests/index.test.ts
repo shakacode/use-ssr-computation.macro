@@ -16,12 +16,12 @@ pluginTester({
     "no usage": `import { useSSRComputation } from "../lib/index.macro"`,
     "server-side": `
       import { useSSRComputation } from "../lib/index.macro"
-      const x = useSSRComputation("./a.ssr-computation");
+      const x = useSSRComputation("./a.ssr-computation", []);
     `,
     "multiple-imports-server-side": `
       import { useSSRComputation } from "../lib/index.macro"
-      const x = useSSRComputation("./a.ssr-computation")
-      const y = useSSRComputation("./b.ssr-computation")
+      const x = useSSRComputation("./a.ssr-computation", [])
+      const y = useSSRComputation("./b.ssr-computation", [])
     `,
   },
 });
@@ -45,16 +45,16 @@ pluginTester({
   tests: {
     "client-side": `
       import { useSSRComputation } from "../lib/index.macro"
-      const x = useSSRComputation("./a.ssr-computation")
+      const x = useSSRComputation("./a.ssr-computation", [])
     `,
     "multiple-imports-client-side": `
       import { useSSRComputation } from "../lib/index.macro"
-      const x = useSSRComputation("./a.ssr-computation")
-      const y = useSSRComputation("./b.ssr-computation")
+      const x = useSSRComputation("./a.ssr-computation", [])
+      const y = useSSRComputation("./b.ssr-computation", [])
     `,
     "custom-wepback-chunk-client-side": `
     import { useSSRComputation } from "../lib/index.macro"
-    const x = useSSRComputation("./a.ssr-computation", "custom-chunk-name")
+    const x = useSSRComputation("./a.ssr-computation", [], { webpackChunkName: "custom-chunk-name" })
   `,
   },
 });
