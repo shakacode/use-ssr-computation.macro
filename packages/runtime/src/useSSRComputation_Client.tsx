@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useSSRCache } from "./SSRCacheProvider";
 import { calculateCacheKey, Dependency, isDependency } from "./utils";
 
-export default function useSSRComputation_Client(importFn: () => Promise<{ default: () => any }>, modulePath: string, dependencies: any[]) {
-  const [fn, setFn] = useState<()=>any>();
+export default function useSSRComputation_Client(importFn: () => Promise<{ default: (...dependencies: Dependency[]) => any }>, modulePath: string, dependencies: any[]) {
+  const [fn, setFn] = useState<(...dependencies: Dependency[])=>any>();
   const cache = useSSRCache();
 
   const parsedDependencies = dependencies.map((dependency) => {
@@ -34,7 +34,7 @@ export default function useSSRComputation_Client(importFn: () => Promise<{ defau
   const result = useMemo(()=> {
     if (!fn) return null;
 
-    return fn();
+    return fn(...parsedDependencies);
   }, [fn]);
 
   if (isCacheHit) {
