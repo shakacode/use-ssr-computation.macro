@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSSRCache } from "./SSRCacheProvider";
 import { calculateCacheKey, Dependency, isDependency } from "./utils";
 
-export default function useSSRComputation_Client(importFn: () => Promise<{ default: (...dependencies: Dependency[]) => any }>, modulePath: string, dependencies: any[]) {
+export default function useSSRComputation_Client(importFn: () => Promise<{ default: (...dependencies: Dependency[]) => any }>, modulePath: string, dependencies: any[], relativePathToCwd: string) {
   const [fn, setFn] = useState<(...dependencies: Dependency[])=>any>();
   const cache = useSSRCache();
 
@@ -13,7 +13,9 @@ export default function useSSRComputation_Client(importFn: () => Promise<{ defau
     throw new Error(`useSSRComputation: dependency ${dependency} is not a valid dependency object`);
   }) as Dependency[];
 
-  const cacheKey = calculateCacheKey(modulePath, parsedDependencies);
+  // relativePathToCwd is used to make sure that the cache key is unique for each module
+  // and it's not affected by the file that calls it
+  const cacheKey = calculateCacheKey(relativePathToCwd, parsedDependencies);
   const isCacheHit = cache?.[cacheKey];
   useEffect(() => {
     if (isCacheHit) return;

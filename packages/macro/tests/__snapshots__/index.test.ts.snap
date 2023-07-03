@@ -17,6 +17,7 @@ const x = useSSRComputation_Client(
     ),
   "./a.ssr-computation",
   [],
+  "tests/a.ssr-computation",
 );
 
 `;
@@ -49,6 +50,7 @@ const x = useSSRComputation_Client(
     ),
   "./a.ssr-computation",
   [],
+  "tests/a.ssr-computation",
 );
 const y = useSSRComputation_Client(
   () =>
@@ -57,6 +59,7 @@ const y = useSSRComputation_Client(
     ),
   "./b.ssr-computation",
   [],
+  "tests/b.ssr-computation",
 );
 
 `;
@@ -72,7 +75,12 @@ const x = useSSRComputation("./a.ssr-computation", []);
 
 import __a from "./a.ssr-computation";
 import useSSRComputation_Server from "use-ssr-computation.runtime/lib/useSSRComputation_Server";
-const x = useSSRComputation_Server(__a, "./a.ssr-computation", []);
+const x = useSSRComputation_Server(
+  __a,
+  "./a.ssr-computation",
+  [],
+  "tests/a.ssr-computation",
+);
 
 `;
 
@@ -93,6 +101,7 @@ const x = useSSRComputation_Client(
     ),
   "./a.ssr-computation",
   [],
+  "tests/a.ssr-computation",
 );
 
 `;
@@ -110,7 +119,17 @@ const y = useSSRComputation("./b.ssr-computation", [])
 import __b from "./b.ssr-computation";
 import __a from "./a.ssr-computation";
 import useSSRComputation_Server from "use-ssr-computation.runtime/lib/useSSRComputation_Server";
-const x = useSSRComputation_Server(__a, "./a.ssr-computation", []);
-const y = useSSRComputation_Server(__b, "./b.ssr-computation", []);
+const x = useSSRComputation_Server(
+  __a,
+  "./a.ssr-computation",
+  [],
+  "tests/a.ssr-computation",
+);
+const y = useSSRComputation_Server(
+  __b,
+  "./b.ssr-computation",
+  [],
+  "tests/b.ssr-computation",
+);
 
 `;

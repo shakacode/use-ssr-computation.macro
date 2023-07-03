@@ -173,6 +173,9 @@ const macro: MacroHandler = ({ references, state }) => {
         );
         parent.arguments.unshift(dynamicImportExpression);
       }
+
+      const relativePathToCwd = path.relative(process.cwd(), absolutePath);
+      parent.arguments.push(t.stringLiteral(relativePathToCwd));
     }
   });
 
