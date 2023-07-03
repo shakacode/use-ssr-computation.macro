@@ -1,7 +1,7 @@
 import { useSSRCache } from "./SSRCacheProvider";
 import { calculateCacheKey } from "./utils";
 
-export default function useSSRComputation_Server(fn: (...dependencies: any[]) => any, modulePath: string, dependencies: any[], relativePathToCwd: string) {
+export default function useSSRComputation_Server(fn: (...dependencies: any[]) => any, dependencies: any[], relativePathToCwd: string) {
   const cache = useSSRCache();
   const result = fn(...dependencies)
 

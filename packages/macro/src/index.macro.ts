@@ -115,8 +115,8 @@ const macro: MacroHandler = ({ references, state }) => {
         throw new Error("useSSRComputation must be called with at most three arguments: a path to a .ssr-computation.js file containing the definition of the funciton, array of dependencies and options object.");
       }
   
-      const filenameNode = parent.arguments[0];
-      const optionsNode = parent.arguments.length === 3 ? parent.arguments.pop() : t.objectExpression([]);
+      const filenameNode = parent.arguments.shift();
+      const optionsNode = parent.arguments.length === 2 ? parent.arguments.pop() : t.objectExpression([]);
 
       if (!t.isStringLiteral(filenameNode)) {
         throw new Error("The first argument must be a path to an existing ts file.");

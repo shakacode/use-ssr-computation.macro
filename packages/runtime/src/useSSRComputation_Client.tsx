@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSSRCache } from "./SSRCacheProvider";
 import { calculateCacheKey, Dependency, isDependency } from "./utils";
 
-export default function useSSRComputation_Client(importFn: () => Promise<{ default: (...dependencies: Dependency[]) => any }>, modulePath: string, dependencies: any[], relativePathToCwd: string) {
+export default function useSSRComputation_Client(importFn: () => Promise<{ default: (...dependencies: Dependency[]) => any }>, dependencies: any[], relativePathToCwd: string) {
   const [fn, setFn] = useState<(...dependencies: Dependency[])=>any>();
   const cache = useSSRCache();
 
