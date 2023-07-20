@@ -41,27 +41,33 @@ export type Options = {
   webpackChunkName?: string;
 }
 
+type PrimitiveObjectProperty = t.ObjectProperty & {
+  key: t.Identifier | t.StringLiteral;
+  value: t.StringLiteral | t.BooleanLiteral | t.NumericLiteral;
+}
+
+function isPrimitiveObjectProperty(property: t.ObjectProperty | t.ObjectMethod | t.SpreadElement): property is PrimitiveObjectProperty {
+  return t.isObjectProperty(property) &&
+         (t.isIdentifier(property.key) || t.isStringLiteral(property.key)) &&
+         (t.isStringLiteral(property.value) || t.isBooleanLiteral(property.value) || t.isNumericLiteral(property.value));
+}
+
 function parseToOptions(optionsNode: t.ObjectExpression): Options {
   if (optionsNode.properties.length === 0) {
     return {};
   }
 
-  if (optionsNode.properties.length > 1) {
-    throw new Error("The third argument must be an options object with only the 'webpackChunkName' property.");
-  }
+  const options = {};
+  for (const property of optionsNode.properties) {
+    if (!isPrimitiveObjectProperty(property)) {
+      throw new Error("Options object can only contain properties with primitive values.")
+    }
 
-  const webpackChunkNameProperty = optionsNode.properties[0];
-  if (!t.isObjectProperty(webpackChunkNameProperty) || !t.isIdentifier(webpackChunkNameProperty.key) || webpackChunkNameProperty.key.name !== 'webpackChunkName') {
-    throw new Error("The third argument must be an options object with only the 'webpackChunkName' property.");
+    const key = t.isStringLiteral(property.key) ? property.key.value : property.key.name;
+    options[key] = property.value.value;
   }
-
-  if (!t.isStringLiteral(webpackChunkNameProperty.value)) {
-    throw new Error("The 'webpackChunkName' property must be a string literal.");
-  }
-
-  return {
-    webpackChunkName: webpackChunkNameProperty.value.value,
-  };
+  
+  return options;
 }
 
 const macro: MacroHandler = ({ references, state }) => {
