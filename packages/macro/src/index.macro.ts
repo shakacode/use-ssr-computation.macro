@@ -90,20 +90,6 @@ const macro: MacroHandler = ({ references, state }) => {
   }
   const side : 'client' | 'server' = opts?.side;
 
-  // const contentsCache: { [filename: string]: string } = {
-  //   "/": state.file.code,
-  // };
-
-  // const readFile = (filename: string): string => {
-  //   let contents = contentsCache[filename];
-  //   if (contents == null) {
-  //     contents = fs.readFileSync(filename, "utf-8");
-  //     contentsCache[filename] = contents;
-  //   }
-
-  //   return contents;
-  // };
-
   (references.useSSRComputation || []).map((nodePath: NodePath) => {
     const parent = nodePath.parent;
     if (t.isCallExpression(parent)) {
