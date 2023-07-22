@@ -4,6 +4,8 @@ import * as path from "path";
 import * as fs from "fs";
 import * as t from "@babel/types";
 
+export type Dependency = number | string | { uniqueId: string; }
+
 function addImportStatement(importName: string, importPath: string, isDefault: boolean, nodePath: NodePath) {
   const programPath = nodePath.findParent((path) => path.isProgram());
   if (!programPath || !t.isProgram(programPath.node)) {
@@ -173,7 +175,7 @@ const macro: MacroHandler = ({ references, state }) => {
 
 };
 
-export const useSSRComputation: (filename: string, webpackChunkName?: string ) => number = null as any;
+export const useSSRComputation: (filename: string, dependencies: Dependency[], options: Options) => any = null as any;
 
 export default createMacro(macro, {
   configName: "useSSRComputation",
