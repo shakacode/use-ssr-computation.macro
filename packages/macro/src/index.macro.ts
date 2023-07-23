@@ -3,6 +3,7 @@ import { NodePath } from "@babel/core";
 import * as path from "path";
 import * as fs from "fs";
 import * as t from "@babel/types";
+import { Dependency } from "use-ssr-computation.runtime/src/utils"
 
 function addImportStatement(importName: string, importPath: string, isDefault: boolean, nodePath: NodePath) {
   const programPath = nodePath.findParent((path) => path.isProgram());
@@ -37,6 +38,39 @@ interface PluginOptions {
   };
 }
 
+export type Options = {
+  webpackChunkName?: string;
+}
+
+type PrimitiveObjectProperty = t.ObjectProperty & {
+  key: t.Identifier | t.StringLiteral;
+  value: t.StringLiteral | t.BooleanLiteral | t.NumericLiteral;
+}
+
+function isPrimitiveObjectProperty(property: t.ObjectProperty | t.ObjectMethod | t.SpreadElement): property is PrimitiveObjectProperty {
+  return t.isObjectProperty(property) &&
+         (t.isIdentifier(property.key) || t.isStringLiteral(property.key)) &&
+         (t.isStringLiteral(property.value) || t.isBooleanLiteral(property.value) || t.isNumericLiteral(property.value));
+}
+
+function parseToOptions(optionsNode: t.ObjectExpression): Options {
+  if (optionsNode.properties.length === 0) {
+    return {};
+  }
+
+  const options = {};
+  for (const property of optionsNode.properties) {
+    if (!isPrimitiveObjectProperty(property)) {
+      throw new Error("Options object can only contain properties with primitive values.")
+    }
+
+    const key = t.isStringLiteral(property.key) ? property.key.value : property.key.name;
+    options[key] = property.value.value;
+  }
+  
+  return options;
+}
+
 const macro: MacroHandler = ({ references, state }) => {
   const currentFilename = state.file.opts.filename;
   if (!currentFilename) {
@@ -63,33 +97,31 @@ const macro: MacroHandler = ({ references, state }) => {
   }
   const side : 'client' | 'server' = opts?.side;
 
-  // const contentsCache: { [filename: string]: string } = {
-  //   "/": state.file.code,
-  // };
-
-  // const readFile = (filename: string): string => {
-  //   let contents = contentsCache[filename];
-  //   if (contents == null) {
-  //     contents = fs.readFileSync(filename, "utf-8");
-  //     contentsCache[filename] = contents;
-  //   }
-
-  //   return contents;
-  // };
-
   (references.useSSRComputation || []).map((nodePath: NodePath) => {
     const parent = nodePath.parent;
     if (t.isCallExpression(parent)) {
-      if (parent.arguments.length < 1) { 
-        throw new Error("useSSRComputation must be called with at least one arguments: a path to a .ssr-computation.js file containing the definition of the funciton.");
+      if (parent.arguments.length < 2) { 
+        throw new Error("useSSRComputation must be called with at least two arguments: a path to a .ssr-computation.js file containing the definition of the funciton and array of dependencies.");
+      }
+
+      if (parent.arguments.length > 3) {
+        throw new Error("useSSRComputation must be called with at most three arguments: a path to a .ssr-computation.js file containing the definition of the funciton, array of dependencies and options object.");
       }
   
-      const filenameNode = parent.arguments[0];
-      const webpackChunkNameNode = parent.arguments[1];
+      const filenameNode = parent.arguments.shift();
+      const optionsNode = parent.arguments.length === 2 ? parent.arguments.pop() : t.objectExpression([]);
+
       if (!t.isStringLiteral(filenameNode)) {
         throw new Error("The first argument must be a path to an existing ts file.");
       }
-      const webpackChunkName = (webpackChunkNameNode && t.isStringLiteral(webpackChunkNameNode) ? webpackChunkNameNode.value : 'default') + '-ssr-computations';
+
+      // Check and parse options
+      if (!t.isObjectExpression(optionsNode)) {
+        throw new Error("The third argument must be an options object.");
+      }
+      const options = parseToOptions(optionsNode);
+
+      const webpackChunkName = (options.webpackChunkName ? options.webpackChunkName : 'default') + '-ssr-computations';
 
       const absolutePath = path.resolve(
         path.dirname(currentFilename),
@@ -134,12 +166,15 @@ const macro: MacroHandler = ({ references, state }) => {
         );
         parent.arguments.unshift(dynamicImportExpression);
       }
+
+      const relativePathToCwd = path.relative(process.cwd(), absolutePath);
+      parent.arguments.push(t.stringLiteral(relativePathToCwd));
     }
   });
 
 };
 
-export const useSSRComputation: (filename: string, webpackChunkName?: string ) => number = null as any;
+export const useSSRComputation: (filename: string, dependencies: Dependency[], options: Options) => any = null as any;
 
 export default createMacro(macro, {
   configName: "useSSRComputation",
