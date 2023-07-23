@@ -3,8 +3,7 @@ import { NodePath } from "@babel/core";
 import * as path from "path";
 import * as fs from "fs";
 import * as t from "@babel/types";
-
-export type Dependency = number | string | { uniqueId: string; }
+import { Dependency } from "use-ssr-computation.runtime/src/utils"
 
 function addImportStatement(importName: string, importPath: string, isDefault: boolean, nodePath: NodePath) {
   const programPath = nodePath.findParent((path) => path.isProgram());
