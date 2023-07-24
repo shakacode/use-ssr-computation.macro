@@ -8,6 +8,10 @@ transpiled
 # Development
 .envrc.local
 
+# Yalc - for developing component library in sync
+.yalc
+yalc.lock
+
 # JavaScript
 *.tsbuildinfo
 .tern-port
