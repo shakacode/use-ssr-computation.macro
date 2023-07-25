@@ -10,16 +10,8 @@ Count lines or words in files at build time
 
 ## Installation
 
-`useSSRComputation.macro` is a [Babel
-macro](https://github.com/kentcdodds/babel-plugin-macros). This will work out of
-the box with CRA, Gatsby, and Next.
-
-```shell
-npm install --save-dev useSSRComputation.macro
-```
+TBD
 
 ## Usage
 
-Line and word information is based on the **source** file, not the output file.
-
-For example, this file
+TBD
