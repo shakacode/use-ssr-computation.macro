@@ -11,5 +11,5 @@ export default function getSSRComputation_Server(fn: (...dependencies: any[]) =>
     cache[cacheKey] = result;
   }
 
-  return result;
+  return Promise.resolve(result);
 }
