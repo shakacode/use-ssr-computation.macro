@@ -32,7 +32,7 @@ function addImportStatement(importName: string, importPath: string, isDefault: b
 }
 
 interface PluginOptions {
-  useSSRComputation: {
+  SSRComputation: {
     side: 'client' | 'server';
   };
 }
@@ -73,19 +73,19 @@ function parseToOptions(optionsNode: t.ObjectExpression): Options {
 export const replaceWithServerAndClientFunctions: (functionName: string) => MacroHandler = (functionName: string) => ({ references, state }) => {
   const currentFilename = state.file.opts.filename;
   if (!currentFilename) {
-    throw new Error("useSSRComputation is called without filename");
+    throw new Error(`${functionName} is called without filename`);
   }
 
   const pluginOptions = state.opts as PluginOptions;
 
-  const opts = pluginOptions?.useSSRComputation;
+  const opts = pluginOptions?.SSRComputation;
   if (!opts || (opts.side !== 'client' && opts.side !== 'server')) {
     throw new Error(`The "side" option must be specified in babel-plugin-macros config in babel.config.js:
       plugins: [
         [
           "macros",
           {
-            useSSRComputation: {
+            SSRComputation: {
               isSSRBundle ? "server" : "client",
             },
           },  
@@ -96,15 +96,15 @@ export const replaceWithServerAndClientFunctions: (functionName: string) => Macr
   }
   const side : 'client' | 'server' = opts?.side;
 
-  (references.useSSRComputation || []).map((nodePath: NodePath) => {
+  (references[functionName] || []).map((nodePath: NodePath) => {
     const parent = nodePath.parent;
     if (t.isCallExpression(parent)) {
       if (parent.arguments.length < 2) { 
-        throw new Error("useSSRComputation must be called with at least two arguments: a path to a .ssr-computation.js file containing the definition of the funciton and array of dependencies.");
+        throw new Error(`${functionName} must be called with at least two arguments: a path to a .ssr-computation.js file containing the definition of the funciton and array of dependencies.`);
       }
 
       if (parent.arguments.length > 3) {
-        throw new Error("useSSRComputation must be called with at most three arguments: a path to a .ssr-computation.js file containing the definition of the funciton, array of dependencies and options object.");
+        throw new Error(`${functionName} must be called with at most three arguments: a path to a .ssr-computation.js file containing the definition of the funciton, array of dependencies and options object.`);
       }
   
       const filenameNode = parent.arguments.shift();
@@ -132,16 +132,16 @@ export const replaceWithServerAndClientFunctions: (functionName: string) => Macr
         throw new Error(`The file ${filenameNode}(.js/.ts/.jsx/.tsx) does not exist.`);
       }
 
-      const useSSRComputationFunctionName = `${functionName}_${side.charAt(0).toUpperCase() + side.slice(1)}`; 
-      parent.callee = t.identifier(useSSRComputationFunctionName);
-      addImportStatement(useSSRComputationFunctionName, `use-ssr-computation.runtime/lib/${useSSRComputationFunctionName}`, true, nodePath);
+      const ssrComputationFunctionName = `${functionName}_${side.charAt(0).toUpperCase() + side.slice(1)}`; 
+      parent.callee = t.identifier(ssrComputationFunctionName);
+      addImportStatement(ssrComputationFunctionName, `use-ssr-computation.runtime/lib/${ssrComputationFunctionName}`, true, nodePath);
       
       if (side === 'server')
       {
         let importedFunctionName = filenameNode.value;
         const delimeter = '.ssr-computation';
         if (!importedFunctionName.endsWith('.ssr-computation')) {
-          throw new Error(`The file ${importedFunctionName} must have the extension ${delimeter} to be used in useSSRComputation`);
+          throw new Error(`The file ${importedFunctionName} must have the extension ${delimeter} to be used in ${functionName}`);
         }
 
         importedFunctionName = importedFunctionName.replace(delimeter, '');
