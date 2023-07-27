@@ -56,10 +56,15 @@ pluginTester({
       import { useSSRComputation } from "../lib/index.macro"
       const x = useSSRComputation("./a.ssr-computation", [], { webpackChunkName: "custom-chunk-name" })
     `,
-    "client-side with react imported": `
-      import React, { useState } from "react"
+    "client-side inside a react component": `
+      import React from "react"
       import { useSSRComputation } from "../lib/index.macro"
-      const x = useSSRComputation("./a.ssr-computation", [])
+
+      const ReactComponent = () => {
+        const x = useSSRComputation("./a.ssr-computation", []);
+        // To make sure that the macro generate unqiue names
+        const _dynamicImport_ = null;
+      }
     `,
   },
 });
