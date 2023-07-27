@@ -31,7 +31,7 @@ export default function useSSRComputation_Client(importFn: () => Promise<{ defau
     if (!fn) return null;
 
     return fn(...parsedDependencies);
-  }, [fn]);
+  }, [fn, cacheKey]);
 
   if (isCacheHit) {
     return cache[cacheKey];

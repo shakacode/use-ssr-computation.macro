@@ -9,12 +9,16 @@ const x = useSSRComputation("./a.ssr-computation", [])
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
+import { useCallback } from "react";
 import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
 const x = useSSRComputation_Client(
-  () =>
-    import(
-      /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
-    ),
+  useCallback(
+    () =>
+      import(
+        /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
+      ),
+    [],
+  ),
   [],
   "tests/a.ssr-computation",
 );
@@ -41,20 +45,27 @@ const y = useSSRComputation("./b.ssr-computation", [])
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
+import { useCallback } from "react";
 import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
 const x = useSSRComputation_Client(
-  () =>
-    import(
-      /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
-    ),
+  useCallback(
+    () =>
+      import(
+        /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
+      ),
+    [],
+  ),
   [],
   "tests/a.ssr-computation",
 );
 const y = useSSRComputation_Client(
-  () =>
-    import(
-      /* webpackChunkName: "default-ssr-computations" */ "./b.ssr-computation"
-    ),
+  useCallback(
+    () =>
+      import(
+        /* webpackChunkName: "default-ssr-computations" */ "./b.ssr-computation"
+      ),
+    [],
+  ),
   [],
   "tests/b.ssr-computation",
 );
@@ -81,16 +92,20 @@ exports[`macros 3. custom-wepback-chunk-client-side: 3. custom-wepback-chunk-cli
 
 import { useSSRComputation } from "../lib/index.macro"
 const x = useSSRComputation("./a.ssr-computation", [], { webpackChunkName: "custom-chunk-name" })
-  
+    
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
+import { useCallback } from "react";
 import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
 const x = useSSRComputation_Client(
-  () =>
-    import(
-      /* webpackChunkName: "custom-chunk-name-ssr-computations" */ "./a.ssr-computation"
-    ),
+  useCallback(
+    () =>
+      import(
+        /* webpackChunkName: "custom-chunk-name-ssr-computations" */ "./a.ssr-computation"
+      ),
+    [],
+  ),
   [],
   "tests/a.ssr-computation",
 );
@@ -112,5 +127,32 @@ import __a from "./a.ssr-computation";
 import useSSRComputation_Server from "use-ssr-computation.runtime/lib/useSSRComputation_Server";
 const x = useSSRComputation_Server(__a, [], "tests/a.ssr-computation");
 const y = useSSRComputation_Server(__b, [], "tests/b.ssr-computation");
+
+`;
+
+exports[`macros 4. client-side with react imported: 4. client-side with react imported 1`] = `
+
+
+import React, { useState } from "react"
+import { useSSRComputation } from "../lib/index.macro"
+const x = useSSRComputation("./a.ssr-computation", [])
+    
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { useCallback } from "react";
+import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
+import React, { useState } from "react";
+const x = useSSRComputation_Client(
+  useCallback(
+    () =>
+      import(
+        /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
+      ),
+    [],
+  ),
+  [],
+  "tests/a.ssr-computation",
+);
 
 `;

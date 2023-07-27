@@ -12,7 +12,18 @@ function addImportStatement(importName: string, importPath: string, isDefault: b
   }
 
   const existingImportDeclaration = programPath.node.body.find(
-    p => t.isImportDeclaration(p) && p.source.value === importPath
+    p => {
+      // return t.isImportDeclaration(p) && p.source.value === importPath;
+      if (!t.isImportDeclaration(p) || p.source.value !== importPath) {
+        return false;
+      }
+
+      if (isDefault) {
+        return p.specifiers.some(specifier => t.isImportDefaultSpecifier(specifier) && specifier.local.name === importName);
+      } else {
+        return p.specifiers.some(specifier => t.isImportSpecifier(specifier) && specifier.local.name === importName);
+      }
+    }
   );
 
   if (!existingImportDeclaration) {
@@ -153,6 +164,7 @@ const macro: MacroHandler = ({ references, state }) => {
         const identifier = t.identifier(importedFunctionName);
         parent.arguments.unshift(identifier);
       } else {
+        addImportStatement('useCallback', 'react', false, nodePath);
         const importString = t.stringLiteral(filenameNode.value);
         importString.leadingComments = [
           {
@@ -161,8 +173,14 @@ const macro: MacroHandler = ({ references, state }) => {
           }
         ];
 
-        const dynamicImportExpression = t.arrowFunctionExpression([],
-          t.callExpression(t.import(), [importString])
+        const dynamicImportExpression = t.callExpression(
+          t.identifier('useCallback'),
+          [
+            t.arrowFunctionExpression([],
+              t.callExpression(t.import(), [importString])
+            ),
+            t.arrayExpression([])
+          ]
         );
         parent.arguments.unshift(dynamicImportExpression);
       }
