@@ -1,7 +1,8 @@
 {
-  "name": "use-ssr-computation.runtime",
+  "name": "@popmenu/use-ssr-computation.runtime",
   "version": "1.0.3",
   "main": "lib/index.runtime.js",
+  "types": "lib/index.runtime.d.ts",
   "type": "module",
   "license": "MIT",
   "scripts": {
