@@ -30,3 +30,12 @@ export const calculateCacheKey = (modulePath: string, dependencies: Dependency[]
 
   return `${modulePath}::${dependenciesString}`;
 }
+
+export const IgnoreCache = Symbol('IgnoreCache');
+
+export const ignoreCache = (result: any) => {
+  return {
+    [IgnoreCache]: true,
+    result,
+  };
+}
