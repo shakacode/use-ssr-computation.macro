@@ -1,7 +1,8 @@
 {
-  "name": "use-ssr-computation.macro",
+  "name": "@popmenu/use-ssr-computation.macro",
   "version": "1.0.3",
   "main": "lib/index.macro.js",
+  "types": "lib/index.macro.d.ts",
   "license": "MIT",
   "scripts": {
     "build": "tsc -p .",
