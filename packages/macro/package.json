@@ -1,9 +1,12 @@
 {
   "name": "@popmenu/use-ssr-computation.macro",
-  "version": "1.0.3",
+  "version": "1.0.0",
   "main": "lib/index.macro.js",
   "types": "lib/index.macro.d.ts",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p .",
     "build:watch": "yarpm build --watch",

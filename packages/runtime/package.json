@@ -1,10 +1,13 @@
 {
   "name": "@popmenu/use-ssr-computation.runtime",
-  "version": "1.0.3",
+  "version": "1.0.0",
   "main": "lib/index.runtime.js",
   "types": "lib/index.runtime.d.ts",
   "type": "module",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p . && node fixRelativePathsExtensions.js",
     "build:watch": "yarpm build --watch",
