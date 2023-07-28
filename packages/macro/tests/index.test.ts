@@ -23,6 +23,11 @@ pluginTester({
       const x = useSSRComputation("./a.ssr-computation", [])
       const y = useSSRComputation("./b.ssr-computation", [])
     `,
+    "server-side with skip property": `
+      import { useSSRComputation } from "../lib/index.macro"
+      const skip = true;
+      const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name" })
+    `,
   },
 });
 
@@ -65,6 +70,11 @@ pluginTester({
         // To make sure that the macro generate unqiue names
         const _dynamicImport_ = null;
       }
+    `,
+    "client-side with skip property": `
+      import { useSSRComputation } from "../lib/index.macro"
+      const skip = true;
+      const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name" })
     `,
   },
 });
