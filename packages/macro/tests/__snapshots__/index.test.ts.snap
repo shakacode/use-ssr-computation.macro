@@ -9,12 +9,14 @@ const x = useSSRComputation("./a.ssr-computation", [])
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
+function _dynamicImport_() {
+  return import(
+    /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
+  );
+}
 import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
 const x = useSSRComputation_Client(
-  () =>
-    import(
-      /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
-    ),
+  _dynamicImport_,
   [],
   "tests/a.ssr-computation",
 );
@@ -41,20 +43,24 @@ const y = useSSRComputation("./b.ssr-computation", [])
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
+function _dynamicImport_2() {
+  return import(
+    /* webpackChunkName: "default-ssr-computations" */ "./b.ssr-computation"
+  );
+}
+function _dynamicImport_() {
+  return import(
+    /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
+  );
+}
 import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
 const x = useSSRComputation_Client(
-  () =>
-    import(
-      /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
-    ),
+  _dynamicImport_,
   [],
   "tests/a.ssr-computation",
 );
 const y = useSSRComputation_Client(
-  () =>
-    import(
-      /* webpackChunkName: "default-ssr-computations" */ "./b.ssr-computation"
-    ),
+  _dynamicImport_2,
   [],
   "tests/b.ssr-computation",
 );
@@ -81,16 +87,18 @@ exports[`macros 3. custom-wepback-chunk-client-side: 3. custom-wepback-chunk-cli
 
 import { useSSRComputation } from "../lib/index.macro"
 const x = useSSRComputation("./a.ssr-computation", [], { webpackChunkName: "custom-chunk-name" })
-  
+    
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
+function _dynamicImport_() {
+  return import(
+    /* webpackChunkName: "custom-chunk-name-ssr-computations" */ "./a.ssr-computation"
+  );
+}
 import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
 const x = useSSRComputation_Client(
-  () =>
-    import(
-      /* webpackChunkName: "custom-chunk-name-ssr-computations" */ "./a.ssr-computation"
-    ),
+  _dynamicImport_,
   [],
   "tests/a.ssr-computation",
 );
@@ -112,5 +120,39 @@ import __a from "./a.ssr-computation";
 import useSSRComputation_Server from "use-ssr-computation.runtime/lib/useSSRComputation_Server";
 const x = useSSRComputation_Server(__a, [], "tests/a.ssr-computation");
 const y = useSSRComputation_Server(__b, [], "tests/b.ssr-computation");
+
+`;
+
+exports[`macros 4. client-side inside a react component: 4. client-side inside a react component 1`] = `
+
+
+import React from "react"
+import { useSSRComputation } from "../lib/index.macro"
+
+const ReactComponent = () => {
+  const x = useSSRComputation("./a.ssr-computation", []);
+  // To make sure that the macro generate unqiue names
+  const _dynamicImport_ = null;
+}
+    
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+function _dynamicImport_2() {
+  return import(
+    /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
+  );
+}
+import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
+import React from "react";
+const ReactComponent = () => {
+  const x = useSSRComputation_Client(
+    _dynamicImport_2,
+    [],
+    "tests/a.ssr-computation",
+  );
+  // To make sure that the macro generate unqiue names
+  const _dynamicImport_ = null;
+};
 
 `;

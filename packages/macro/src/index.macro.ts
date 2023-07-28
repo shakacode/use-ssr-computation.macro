@@ -5,14 +5,30 @@ import * as fs from "fs";
 import * as t from "@babel/types";
 import { Dependency } from "use-ssr-computation.runtime/src/utils"
 
-function addImportStatement(importName: string, importPath: string, isDefault: boolean, nodePath: NodePath) {
-  const programPath = nodePath.findParent((path) => path.isProgram());
+function getProgramPath (nodePath: NodePath): NodePath<t.Program> {
+  const programPath = nodePath.findParent((path) => path.isProgram()) as NodePath<t.Program>;
   if (!programPath || !t.isProgram(programPath.node)) {
     throw new Error("Could not find program path");
   }
+  return programPath;
+}
+
+function addImportStatement(importName: string, importPath: string, isDefault: boolean, nodePath: NodePath) {
+  const programPath = getProgramPath(nodePath);
 
   const existingImportDeclaration = programPath.node.body.find(
-    p => t.isImportDeclaration(p) && p.source.value === importPath
+    p => {
+      // return t.isImportDeclaration(p) && p.source.value === importPath;
+      if (!t.isImportDeclaration(p) || p.source.value !== importPath) {
+        return false;
+      }
+
+      if (isDefault) {
+        return p.specifiers.some(specifier => t.isImportDefaultSpecifier(specifier) && specifier.local.name === importName);
+      } else {
+        return p.specifiers.some(specifier => t.isImportSpecifier(specifier) && specifier.local.name === importName);
+      }
+    }
   );
 
   if (!existingImportDeclaration) {
@@ -153,6 +169,7 @@ const macro: MacroHandler = ({ references, state }) => {
         const identifier = t.identifier(importedFunctionName);
         parent.arguments.unshift(identifier);
       } else {
+        nodePath.node.start
         const importString = t.stringLiteral(filenameNode.value);
         importString.leadingComments = [
           {
@@ -161,10 +178,23 @@ const macro: MacroHandler = ({ references, state }) => {
           }
         ];
 
-        const dynamicImportExpression = t.arrowFunctionExpression([],
-          t.callExpression(t.import(), [importString])
+        const dynamicImportFunctionName = nodePath.scope.generateUidIdentifier('dynamicImport_');
+        const dynamicImportFunction = t.functionDeclaration(
+          dynamicImportFunctionName,
+          [],
+          t.blockStatement([
+            t.returnStatement(
+              t.callExpression(
+                t.identifier('import'),
+                [importString]
+              ),
+            ),
+          ]),
         );
-        parent.arguments.unshift(dynamicImportExpression);
+        
+        const programPath = getProgramPath(nodePath);
+        programPath.node.body.unshift(dynamicImportFunction);
+        parent.arguments.unshift(dynamicImportFunctionName);
       }
 
       const relativePathToCwd = path.relative(process.cwd(), absolutePath);
