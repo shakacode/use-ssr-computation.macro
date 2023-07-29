@@ -28,6 +28,11 @@ pluginTester({
       const skip = true;
       const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name" })
     `,
+    "server-side with serverSideOnly": `
+      import { useSSRComputation } from "../lib/index.macro"
+      const skip = true;
+      const x = useSSRComputation("./a.ssr-computation", [], { serverSideOnly: true })
+    `,
   },
 });
 
@@ -71,10 +76,14 @@ pluginTester({
         const _dynamicImport_ = null;
       }
     `,
-    "client-side with skip property": `
+    "client-side with skip option": `
       import { useSSRComputation } from "../lib/index.macro"
       const skip = true;
       const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name" })
+    `,
+    "client-side with serverSideOnly option": `
+      import { useSSRComputation } from "../lib/index.macro"
+      const x = useSSRComputation("./a.ssr-computation", [], { webpackChunkName: "custom-chunk-name", serverSideOnly: true })
     `,
   },
 });

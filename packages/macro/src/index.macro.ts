@@ -3,7 +3,9 @@ import { NodePath } from "@babel/core";
 import * as path from "path";
 import * as fs from "fs";
 import * as t from "@babel/types";
-import { Dependency, Options as RuntimeOptions } from "@popmenu/use-ssr-computation.runtime/src/utils"
+import { Dependency } from "@popmenu/use-ssr-computation.runtime/src/utils"
+
+import { extractMacroOptions, Options } from './utils';
 
 function getProgramPath (nodePath: NodePath): NodePath<t.Program> {
   const programPath = nodePath.findParent((path) => path.isProgram()) as NodePath<t.Program>;
@@ -51,31 +53,6 @@ function addImportStatement(importName: string, importPath: string, isDefault: b
 interface PluginOptions {
   useSSRComputation: {
     side: 'client' | 'server';
-  };
-}
-
-export type Options = {
-  webpackChunkName?: string;
-} & RuntimeOptions;
-
-function extractMacroOptions(optionsNode: t.ObjectExpression): Options {
-  const webpackChunkNameProperty = optionsNode.properties.find(property => {
-    if (!t.isObjectProperty(property) || !(t.isIdentifier(property.key) || t.isStringLiteral(property.key))) return false;
-
-    const key = t.isStringLiteral(property.key) ? property.key.value : property.key.name;
-    return key === 'webpackChunkName';
-  }) as t.ObjectProperty;
-
-  if (!webpackChunkNameProperty) return {};
-
-  if (!t.isStringLiteral(webpackChunkNameProperty.value)) {
-    throw new Error("The webpackChunkName property must be a string literal.");
-  }
-
-  if (!webpackChunkNameProperty) return {};
-  optionsNode.properties.splice(optionsNode.properties.indexOf(webpackChunkNameProperty), 1);
-  return {
-    webpackChunkName: webpackChunkNameProperty.value.value
   };
 }
 
@@ -135,6 +112,12 @@ const macro: MacroHandler = ({ references, state }) => {
         path.dirname(currentFilename),
         filenameNode.value,
       );
+
+      if (macroOptions.serverSideOnly && side !== 'server') {
+        // replace the call to useSSRComputation with null
+        nodePath.parentPath?.replaceWith(t.nullLiteral());
+        return;
+      }
 
       const extensions = ['.ts', '.js', '.tsx', '.jsx'];
       if (!extensions.some(extension => fs.existsSync(absolutePath + extension))) {

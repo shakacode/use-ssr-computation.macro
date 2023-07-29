@@ -186,7 +186,7 @@ const x = useSSRComputation_Server(
 
 `;
 
-exports[`macros 5. client-side with skip property: 5. client-side with skip property 1`] = `
+exports[`macros 5. client-side with skip option: 5. client-side with skip option 1`] = `
 
 
 import { useSSRComputation } from "../lib/index.macro"
@@ -211,5 +211,63 @@ const x = useSSRComputation_Client(
   },
   "tests/a.ssr-computation",
 );
+
+`;
+
+exports[`macros 5. client-side with skip property: 5. client-side with skip property 1`] = `
+
+
+import { useSSRComputation } from "../lib/index.macro"
+const skip = true;
+const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name", serverSideOnly: true })
+    
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+function _dynamicImport_() {
+  return import(
+    /* webpackChunkName: "custom-chunk-name-ssr-computations" */ "./a.ssr-computation"
+  );
+}
+import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
+const skip = true;
+const x = useSSRComputation_Client(
+  _dynamicImport_,
+  [],
+  {
+    skip,
+  },
+  "tests/a.ssr-computation",
+);
+
+`;
+
+exports[`macros 5. server-side with serverSideOnly: 5. server-side with serverSideOnly 1`] = `
+
+
+import { useSSRComputation } from "../lib/index.macro"
+const skip = true;
+const x = useSSRComputation("./a.ssr-computation", [], { serverSideOnly: true })
+    
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import __a from "./a.ssr-computation";
+import useSSRComputation_Server from "use-ssr-computation.runtime/lib/useSSRComputation_Server";
+const skip = true;
+const x = useSSRComputation_Server(__a, [], {}, "tests/a.ssr-computation");
+
+`;
+
+exports[`macros 6. client-side with serverSideOnly option: 6. client-side with serverSideOnly option 1`] = `
+
+
+import { useSSRComputation } from "../lib/index.macro"
+const x = useSSRComputation("./a.ssr-computation", [], { webpackChunkName: "custom-chunk-name", serverSideOnly: true })
+    
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+const x = null;
 
 `;
