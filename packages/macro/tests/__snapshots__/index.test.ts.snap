@@ -214,34 +214,6 @@ const x = useSSRComputation_Client(
 
 `;
 
-exports[`macros 5. client-side with skip property: 5. client-side with skip property 1`] = `
-
-
-import { useSSRComputation } from "../lib/index.macro"
-const skip = true;
-const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name", serverSideOnly: true })
-    
-
-      ↓ ↓ ↓ ↓ ↓ ↓
-
-function _dynamicImport_() {
-  return import(
-    /* webpackChunkName: "custom-chunk-name-ssr-computations" */ "./a.ssr-computation"
-  );
-}
-import useSSRComputation_Client from "use-ssr-computation.runtime/lib/useSSRComputation_Client";
-const skip = true;
-const x = useSSRComputation_Client(
-  _dynamicImport_,
-  [],
-  {
-    skip,
-  },
-  "tests/a.ssr-computation",
-);
-
-`;
-
 exports[`macros 5. server-side with serverSideOnly: 5. server-side with serverSideOnly 1`] = `
 
 
