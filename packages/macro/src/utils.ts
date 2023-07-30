@@ -1,5 +1,5 @@
 import * as t from "@babel/types";
-import { Options as RuntimeOptions } from "use-ssr-computation.runtime/src/utils"
+import { Options as RuntimeOptions } from "@popmenu/use-ssr-computation.runtime/src/utils"
 
 type MacroOptions = {
   serverSideOnly?: boolean;
