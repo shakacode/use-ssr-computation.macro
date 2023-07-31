@@ -27,7 +27,7 @@
   "author": "Roman Kuksin <rkuksin.cpp@gmail.com>",
   "dependencies": {
     "babel-plugin-macros": "^3.0.0",
-    "use-ssr-computation.runtime": "*"
+    "@popmenu/use-ssr-computation.runtime": "*"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",

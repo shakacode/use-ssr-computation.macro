@@ -3,7 +3,7 @@ import { NodePath } from "@babel/core";
 import * as path from "path";
 import * as fs from "fs";
 import * as t from "@babel/types";
-import { Dependency } from "use-ssr-computation.runtime/src/utils"
+import { Dependency } from "@popmenu/use-ssr-computation.runtime/src/utils"
 
 function getProgramPath (nodePath: NodePath): NodePath<t.Program> {
   const programPath = nodePath.findParent((path) => path.isProgram()) as NodePath<t.Program>;
@@ -151,7 +151,7 @@ const macro: MacroHandler = ({ references, state }) => {
 
       const useSSRComputationFunctionName = `useSSRComputation_${side.charAt(0).toUpperCase() + side.slice(1)}`; 
       parent.callee = t.identifier(useSSRComputationFunctionName);
-      addImportStatement(useSSRComputationFunctionName, `use-ssr-computation.runtime/lib/${useSSRComputationFunctionName}`, true, nodePath);
+      addImportStatement(useSSRComputationFunctionName, `@popmenu/use-ssr-computation.runtime/lib/${useSSRComputationFunctionName}`, true, nodePath);
       
       if (side === 'server')
       {
