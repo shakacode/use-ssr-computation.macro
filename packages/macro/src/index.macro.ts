@@ -175,6 +175,15 @@ const macro: MacroHandler = ({ references, state }) => {
       const relativePathToCwd = path.relative(process.cwd(), absolutePath);
       parent.arguments.push(optionsNode);
       parent.arguments.push(t.stringLiteral(relativePathToCwd));
+
+      // if serverSideOnly is true, replace the call expression with (() => null)(useSSRComputation()).
+      // It makes the function return null on the server sides to match the client side value.
+      if (macroOptions.serverSideOnly) {
+        const nullLiteral = t.nullLiteral();
+        const arrowFunction = t.arrowFunctionExpression([], nullLiteral);
+        const callExpression = t.callExpression(arrowFunction, [parent]);
+        nodePath.parentPath?.replaceWith(callExpression);
+      }
     }
   });
 

@@ -227,7 +227,9 @@ const x = useSSRComputation("./a.ssr-computation", [], { serverSideOnly: true })
 import __a from "./a.ssr-computation";
 import useSSRComputation_Server from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Server";
 const skip = true;
-const x = useSSRComputation_Server(__a, [], {}, "tests/a.ssr-computation");
+const x = (() => null)(
+  useSSRComputation_Server(__a, [], {}, "tests/a.ssr-computation"),
+);
 
 `;
 
