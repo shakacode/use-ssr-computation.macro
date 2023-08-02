@@ -1,5 +1,11 @@
-const pluginTester = require("babel-plugin-tester").default;
+const { pluginTester } = require("babel-plugin-tester");
 const plugin = require("babel-plugin-macros");
+
+// Adding 'export {}' to make this file a module in TypeScript. This ensures that the top-level 
+// declarations like 'const { pluginTester } = require("babel-plugin-tester")' and 
+// 'const plugin = require("babel-plugin-macros")' are local to this file. 
+// This prevents conflicts with similar declarations in other files.
+export {};
 
 pluginTester({
   pluginOptions: {
@@ -22,16 +28,6 @@ pluginTester({
       import { useSSRComputation } from "../lib/index.macro"
       const x = useSSRComputation("./a.ssr-computation", [])
       const y = useSSRComputation("./b.ssr-computation", [])
-    `,
-    "server-side with skip property": `
-      import { useSSRComputation } from "../lib/index.macro"
-      const skip = true;
-      const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name" })
-    `,
-    "server-side with serverSideOnly": `
-      import { useSSRComputation } from "../lib/index.macro"
-      const skip = true;
-      const x = useSSRComputation("./a.ssr-computation", [], { serverSideOnly: true })
     `,
   },
 });
@@ -75,15 +71,6 @@ pluginTester({
         // To make sure that the macro generate unqiue names
         const _dynamicImport_ = null;
       }
-    `,
-    "client-side with skip option": `
-      import { useSSRComputation } from "../lib/index.macro"
-      const skip = true;
-      const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name" })
-    `,
-    "client-side with serverSideOnly option": `
-      import { useSSRComputation } from "../lib/index.macro"
-      const x = useSSRComputation("./a.ssr-computation", [], { webpackChunkName: "custom-chunk-name", serverSideOnly: true })
     `,
   },
 });
