@@ -1,12 +1,38 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`macros 1. client-side with skip option: 1. client-side with skip option 1`] = `
+exports[`macros 1. client-run the calculation on server side only, cache it and don't add it to the client bundle: 1. client-run the calculation on server side only, cache it and don't add it to the client bundle 1`] = `
+
+
+import { useSSRComputation } from "../lib/index.macro";
+
+// The "serverSideOnly" option is used when we want to add a specific value to the cache without needing it ATM
+// For example, if we want to cache a specific value that will be needed in a component that will not be server-side rendered
+// Because we don't need the value now, we don't need to add it to the client bundle. It will be cahced when it's called on the server
+// The "serverSideOnly" option can only take a boolean value. The value is needed at compile time.
+const x = useSSRComputation("./a.ssr-computation", [], { serverSideOnly: true });
+
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+// The "serverSideOnly" option is used when we want to add a specific value to the cache without needing it ATM
+// For example, if we want to cache a specific value that will be needed in a component that will not be server-side rendered
+// Because we don't need the value now, we don't need to add it to the client bundle. It will be cahced when it's called on the server
+// The "serverSideOnly" option can only take a boolean value. The value is needed at compile time.
+const x = null;
+
+`;
+
+exports[`macros 1. client-skip calculation when a specific condition is met: 1. client-skip calculation when a specific condition is met 1`] = `
 
 
 import { useSSRComputation } from "../lib/index.macro"
 const skip = true;
-const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name" })
-      
+
+// The option is used to skip the calculation when a specific condition is met
+// The option is necessary because React hooks can't be called conditionally
+// The skip option can take any expression that's get evaluated at runtime
+const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name" });
+
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
@@ -17,6 +43,10 @@ function _dynamicImport_() {
 }
 import useSSRComputation_Client from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Client";
 const skip = true;
+
+// The option is used to skip the calculation when a specific condition is met
+// The option is necessary because React hooks can't be called conditionally
+// The skip option can take any expression that's get evaluated at runtime
 const x = useSSRComputation_Client(
   _dynamicImport_,
   [],
@@ -28,19 +58,53 @@ const x = useSSRComputation_Client(
 
 `;
 
-exports[`macros 1. server-side with skip option: 1. server-side with skip option 1`] = `
+exports[`macros 1. server-run the calculation on server side only, cache it and don't add it to the client bundle: 1. server-run the calculation on server side only, cache it and don't add it to the client bundle 1`] = `
+
+
+import { useSSRComputation } from "../lib/index.macro";
+
+// The "serverSideOnly" option is used when we want to add a specific value to the cache without needing it ATM
+// For example, if we want to cache a specific value that will be needed in a component that will not be server-side rendered
+// Because we don't need the value now, we don't need to add it to the client bundle. It will be cahced when it's called on the server
+// The "serverSideOnly" option can only take a boolean value. The value is needed at compile time.
+const x = useSSRComputation("./a.ssr-computation", [], { serverSideOnly: true });
+
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import __a from "./a.ssr-computation";
+import useSSRComputation_Server from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Server";
+// The "serverSideOnly" option is used when we want to add a specific value to the cache without needing it ATM
+// For example, if we want to cache a specific value that will be needed in a component that will not be server-side rendered
+// Because we don't need the value now, we don't need to add it to the client bundle. It will be cahced when it's called on the server
+// The "serverSideOnly" option can only take a boolean value. The value is needed at compile time.
+const x = (() => null)(
+  useSSRComputation_Server(__a, [], {}, "tests/a.ssr-computation"),
+);
+
+`;
+
+exports[`macros 1. server-skip calculation when a specific condition is met: 1. server-skip calculation when a specific condition is met 1`] = `
 
 
 import { useSSRComputation } from "../lib/index.macro"
 const skip = true;
-const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name" })
-      
+
+// The option is used to skip the calculation when a specific condition is met
+// The option is necessary because React hooks can't be called conditionally
+// The skip option can take any expression that's get evaluated at runtime
+const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name" });
+
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
 import __a from "./a.ssr-computation";
 import useSSRComputation_Server from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Server";
 const skip = true;
+
+// The option is used to skip the calculation when a specific condition is met
+// The option is necessary because React hooks can't be called conditionally
+// The skip option can take any expression that's get evaluated at runtime
 const x = useSSRComputation_Server(
   __a,
   [],
@@ -48,40 +112,6 @@ const x = useSSRComputation_Server(
     skip,
   },
   "tests/a.ssr-computation",
-);
-
-`;
-
-exports[`macros 2. client-side with serverSideOnly: 2. client-side with serverSideOnly 1`] = `
-
-
-import { useSSRComputation } from "../lib/index.macro"
-const skip = true;
-const x = useSSRComputation("./a.ssr-computation", [], { serverSideOnly: true })
-      
-
-      ↓ ↓ ↓ ↓ ↓ ↓
-
-const skip = true;
-const x = null;
-
-`;
-
-exports[`macros 2. server-side with serverSideOnly: 2. server-side with serverSideOnly 1`] = `
-
-
-import { useSSRComputation } from "../lib/index.macro"
-const skip = true;
-const x = useSSRComputation("./a.ssr-computation", [], { serverSideOnly: true })
-      
-
-      ↓ ↓ ↓ ↓ ↓ ↓
-
-import __a from "./a.ssr-computation";
-import useSSRComputation_Server from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Server";
-const skip = true;
-const x = (() => null)(
-  useSSRComputation_Server(__a, [], {}, "tests/a.ssr-computation"),
 );
 
 `;
