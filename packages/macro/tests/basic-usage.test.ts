@@ -5,12 +5,13 @@ pluginTest('no usage', `
 `);
 
 pluginTest('single-import', `
-  // Imports the macro and uses it to import a single SSR computation file.
-  // On server side, it will be statically imported and executed.
-  // On client side, it will use a dynamic import to lazy load the computation.
-  // The computation will be loaded on the client side if one of dependencies changes.
   import { useSSRComputation } from "../lib/index.macro"
   const x = useSSRComputation("./a.ssr-computation", []);
+`, `
+  Imports the macro and uses it to import a single SSR computation file.
+  On server side, it will be statically imported and executed.
+  On client side, it will use a dynamic import to lazy load the computation.
+  The computation will be loaded on the client side if one of dependencies changes.
 `);
 
 pluginTest('multiple-imports', `

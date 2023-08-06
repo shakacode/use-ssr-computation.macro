@@ -1,14 +1,19 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`macros 1. client-skip calculation when a specific condition is met: 1. client-skip calculation when a specific condition is met 1`] = `
+exports[`macros 1. client-
+  The option is used to skip the calculation when a specific condition is met
+  The option is necessary because React hooks can't be called conditionally
+  The skip option can take any expression that's get evaluated at runtime
+: 1. client-
+  The option is used to skip the calculation when a specific condition is met
+  The option is necessary because React hooks can't be called conditionally
+  The skip option can take any expression that's get evaluated at runtime
+ 1`] = `
 
 
 import { useSSRComputation } from "../lib/index.macro"
 const skip = true;
 
-// The option is used to skip the calculation when a specific condition is met
-// The option is necessary because React hooks can't be called conditionally
-// The skip option can take any expression that's get evaluated at runtime
 const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name" });
 
 
@@ -21,10 +26,6 @@ function _dynamicImport_() {
 }
 import useSSRComputation_Client from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Client";
 const skip = true;
-
-// The option is used to skip the calculation when a specific condition is met
-// The option is necessary because React hooks can't be called conditionally
-// The skip option can take any expression that's get evaluated at runtime
 const x = useSSRComputation_Client(
   _dynamicImport_,
   [],
@@ -36,15 +37,20 @@ const x = useSSRComputation_Client(
 
 `;
 
-exports[`macros 1. server-skip calculation when a specific condition is met: 1. server-skip calculation when a specific condition is met 1`] = `
+exports[`macros 1. server-
+  The option is used to skip the calculation when a specific condition is met
+  The option is necessary because React hooks can't be called conditionally
+  The skip option can take any expression that's get evaluated at runtime
+: 1. server-
+  The option is used to skip the calculation when a specific condition is met
+  The option is necessary because React hooks can't be called conditionally
+  The skip option can take any expression that's get evaluated at runtime
+ 1`] = `
 
 
 import { useSSRComputation } from "../lib/index.macro"
 const skip = true;
 
-// The option is used to skip the calculation when a specific condition is met
-// The option is necessary because React hooks can't be called conditionally
-// The skip option can take any expression that's get evaluated at runtime
 const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName: "custom-chunk-name" });
 
 
@@ -53,10 +59,6 @@ const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName:
 import __a from "./a.ssr-computation";
 import useSSRComputation_Server from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Server";
 const skip = true;
-
-// The option is used to skip the calculation when a specific condition is met
-// The option is necessary because React hooks can't be called conditionally
-// The skip option can take any expression that's get evaluated at runtime
 const x = useSSRComputation_Server(
   __a,
   [],

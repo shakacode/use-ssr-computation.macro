@@ -1,5 +1,39 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`macros 1. client-
+  Imports the macro and uses it to import a single SSR computation file.
+  On server side, it will be statically imported and executed.
+  On client side, it will use a dynamic import to lazy load the computation.
+  The computation will be loaded on the client side if one of dependencies changes.
+: 1. client-
+  Imports the macro and uses it to import a single SSR computation file.
+  On server side, it will be statically imported and executed.
+  On client side, it will use a dynamic import to lazy load the computation.
+  The computation will be loaded on the client side if one of dependencies changes.
+ 1`] = `
+
+
+import { useSSRComputation } from "../lib/index.macro"
+const x = useSSRComputation("./a.ssr-computation", []);
+
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+function _dynamicImport_() {
+  return import(
+    /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
+  );
+}
+import useSSRComputation_Client from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Client";
+const x = useSSRComputation_Client(
+  _dynamicImport_,
+  [],
+  {},
+  "tests/a.ssr-computation",
+);
+
+`;
+
 exports[`macros 1. client-custom-wepback-chunk-name: 1. client-custom-wepback-chunk-name 1`] = `
 
 
@@ -72,37 +106,6 @@ import { useSSRComputation } from "../lib/index.macro"
 
 `;
 
-exports[`macros 1. client-single-import: 1. client-single-import 1`] = `
-
-
-// Imports the macro and uses it to import a single SSR computation file.
-// On server side, it will be statically imported and executed.
-// On client side, it will use a dynamic import to lazy load the computation.
-// The computation will be loaded on the client side if one of dependencies changes.
-import { useSSRComputation } from "../lib/index.macro"
-const x = useSSRComputation("./a.ssr-computation", []);
-
-
-      ↓ ↓ ↓ ↓ ↓ ↓
-
-function _dynamicImport_() {
-  return import(
-    /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
-  );
-}
-import useSSRComputation_Client from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Client"; // Imports the macro and uses it to import a single SSR computation file.
-// On server side, it will be statically imported and executed.
-// On client side, it will use a dynamic import to lazy load the computation.
-// The computation will be loaded on the client side if one of dependencies changes.
-const x = useSSRComputation_Client(
-  _dynamicImport_,
-  [],
-  {},
-  "tests/a.ssr-computation",
-);
-
-`;
-
 exports[`macros 1. client-used-inside-react-component: 1. client-used-inside-react-component 1`] = `
 
 
@@ -135,6 +138,31 @@ const ReactComponent = () => {
   // To make sure that the macro generate unqiue names
   const _dynamicImport_ = null;
 };
+
+`;
+
+exports[`macros 1. server-
+  Imports the macro and uses it to import a single SSR computation file.
+  On server side, it will be statically imported and executed.
+  On client side, it will use a dynamic import to lazy load the computation.
+  The computation will be loaded on the client side if one of dependencies changes.
+: 1. server-
+  Imports the macro and uses it to import a single SSR computation file.
+  On server side, it will be statically imported and executed.
+  On client side, it will use a dynamic import to lazy load the computation.
+  The computation will be loaded on the client side if one of dependencies changes.
+ 1`] = `
+
+
+import { useSSRComputation } from "../lib/index.macro"
+const x = useSSRComputation("./a.ssr-computation", []);
+
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import __a from "./a.ssr-computation";
+import useSSRComputation_Server from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Server";
+const x = useSSRComputation_Server(__a, [], {}, "tests/a.ssr-computation");
 
 `;
 
@@ -180,28 +208,6 @@ import { useSSRComputation } from "../lib/index.macro"
       ↓ ↓ ↓ ↓ ↓ ↓
 
 
-
-`;
-
-exports[`macros 1. server-single-import: 1. server-single-import 1`] = `
-
-
-// Imports the macro and uses it to import a single SSR computation file.
-// On server side, it will be statically imported and executed.
-// On client side, it will use a dynamic import to lazy load the computation.
-// The computation will be loaded on the client side if one of dependencies changes.
-import { useSSRComputation } from "../lib/index.macro"
-const x = useSSRComputation("./a.ssr-computation", []);
-
-
-      ↓ ↓ ↓ ↓ ↓ ↓
-
-import __a from "./a.ssr-computation";
-import useSSRComputation_Server from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Server"; // Imports the macro and uses it to import a single SSR computation file.
-// On server side, it will be statically imported and executed.
-// On client side, it will use a dynamic import to lazy load the computation.
-// The computation will be loaded on the client side if one of dependencies changes.
-const x = useSSRComputation_Server(__a, [], {}, "tests/a.ssr-computation");
 
 `;
 

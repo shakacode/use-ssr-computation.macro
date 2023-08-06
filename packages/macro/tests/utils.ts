@@ -1,9 +1,8 @@
 const { pluginTester } = require("babel-plugin-tester");
 const plugin = require("babel-plugin-macros");
 
-export function pluginTest(testName, testBody) {
+export function pluginTest(testName: string, testBody: any, testDescription: string | null = null) {
   ['server', 'client'].forEach((side) => {
-    console.log('pluginTest', { testName, side });
     console.log(pluginTester({
       pluginOptions: {
         useSSRComputation: { side },
@@ -15,9 +14,8 @@ export function pluginTest(testName, testBody) {
         filename: `${testName}.test.ts`,
       },
       tests: {
-        [`${side}-${testName}`]: testBody,
+        [`${side}-${testDescription || testName}`]: testBody,
       },
     }));
-    console.log('pluginTest', { testName, side, done: true })
   });
 }
