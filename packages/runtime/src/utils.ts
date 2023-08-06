@@ -1,5 +1,9 @@
 export type Dependency = number | string | { uniqueId: string; }
 
+export type Options = {
+  skip?: boolean,
+};
+
 export function isDependency(element: any): element is Dependency {
   return typeof element === 'number' || typeof element === 'string' || (typeof element === 'object' && element.uniqueId !== undefined);
 }

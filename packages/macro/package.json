@@ -1,6 +1,6 @@
 {
   "name": "@popmenu/use-ssr-computation.macro",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "main": "lib/index.macro.js",
   "types": "lib/index.macro.d.ts",
   "license": "MIT",

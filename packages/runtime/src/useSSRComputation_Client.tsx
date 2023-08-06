@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSSRCache } from "./SSRCacheProvider";
-import { calculateCacheKey, Dependency, parseDependencies } from "./utils";
+import { calculateCacheKey, Dependency, Options, parseDependencies } from "./utils";
 
-export default function useSSRComputation_Client(importFn: () => Promise<{ default: (...dependencies: Dependency[]) => any }>, dependencies: any[], relativePathToCwd: string) {
+export default function useSSRComputation_Client(importFn: () => Promise<{ default: (...dependencies: Dependency[]) => any }>, dependencies: any[], options: Options, relativePathToCwd: string) {
   const [fn, setFn] = useState<(...dependencies: Dependency[])=>any>();
   const cache = useSSRCache();
   const parsedDependencies = parseDependencies(dependencies);
+  const skip = !!options.skip;
 
   // relativePathToCwd is used to make sure that the cache key is unique for each module
   // and it's not affected by the file that calls it
   const cacheKey = calculateCacheKey(relativePathToCwd, parsedDependencies);
   const isCacheHit = cache?.[cacheKey];
   useEffect(() => {
-    if (isCacheHit) return;
+    if (isCacheHit || skip) return;
 
     let isMounted = true;
     importFn().then((module) => {
@@ -25,15 +26,15 @@ export default function useSSRComputation_Client(importFn: () => Promise<{ defau
     return () => {
       isMounted = false;
     };
-  }, [isCacheHit, importFn]);
+  }, [isCacheHit, importFn, skip]);
 
   const result = useMemo(()=> {
-    if (!fn) return null;
+    if (!fn || skip) return null;
 
     return fn(...parsedDependencies);
-  }, [fn, cacheKey]);
+  }, [fn, cacheKey, skip]);
 
-  if (isCacheHit) {
+  if (isCacheHit && !skip) {
     return cache[cacheKey];
   }
 

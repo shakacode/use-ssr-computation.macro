@@ -5,6 +5,8 @@ import * as fs from "fs";
 import * as t from "@babel/types";
 import { Dependency } from "@popmenu/use-ssr-computation.runtime/src/utils"
 
+import { extractMacroOptions, Options } from './utils';
+
 function getProgramPath (nodePath: NodePath): NodePath<t.Program> {
   const programPath = nodePath.findParent((path) => path.isProgram()) as NodePath<t.Program>;
   if (!programPath || !t.isProgram(programPath.node)) {
@@ -52,39 +54,6 @@ interface PluginOptions {
   useSSRComputation: {
     side: 'client' | 'server';
   };
-}
-
-export type Options = {
-  webpackChunkName?: string;
-}
-
-type PrimitiveObjectProperty = t.ObjectProperty & {
-  key: t.Identifier | t.StringLiteral;
-  value: t.StringLiteral | t.BooleanLiteral | t.NumericLiteral;
-}
-
-function isPrimitiveObjectProperty(property: t.ObjectProperty | t.ObjectMethod | t.SpreadElement): property is PrimitiveObjectProperty {
-  return t.isObjectProperty(property) &&
-         (t.isIdentifier(property.key) || t.isStringLiteral(property.key)) &&
-         (t.isStringLiteral(property.value) || t.isBooleanLiteral(property.value) || t.isNumericLiteral(property.value));
-}
-
-function parseToOptions(optionsNode: t.ObjectExpression): Options {
-  if (optionsNode.properties.length === 0) {
-    return {};
-  }
-
-  const options = {};
-  for (const property of optionsNode.properties) {
-    if (!isPrimitiveObjectProperty(property)) {
-      throw new Error("Options object can only contain properties with primitive values.")
-    }
-
-    const key = t.isStringLiteral(property.key) ? property.key.value : property.key.name;
-    options[key] = property.value.value;
-  }
-  
-  return options;
 }
 
 const macro: MacroHandler = ({ references, state }) => {
@@ -135,9 +104,9 @@ const macro: MacroHandler = ({ references, state }) => {
       if (!t.isObjectExpression(optionsNode)) {
         throw new Error("The third argument must be an options object.");
       }
-      const options = parseToOptions(optionsNode);
+      const macroOptions = extractMacroOptions(optionsNode);
 
-      const webpackChunkName = (options.webpackChunkName ? options.webpackChunkName : 'default') + '-ssr-computations';
+      const webpackChunkName = (macroOptions.webpackChunkName ? macroOptions.webpackChunkName : 'default') + '-ssr-computations';
 
       const absolutePath = path.resolve(
         path.dirname(currentFilename),
@@ -198,6 +167,7 @@ const macro: MacroHandler = ({ references, state }) => {
       }
 
       const relativePathToCwd = path.relative(process.cwd(), absolutePath);
+      parent.arguments.push(optionsNode);
       parent.arguments.push(t.stringLiteral(relativePathToCwd));
     }
   });
