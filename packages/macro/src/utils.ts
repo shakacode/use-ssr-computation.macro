@@ -2,7 +2,6 @@ import * as t from "@babel/types";
 import { Options as RuntimeOptions } from "@popmenu/use-ssr-computation.runtime/src/utils"
 
 type MacroOptions = {
-  serverSideOnly?: boolean;
   webpackChunkName?: string;
 };
 
@@ -16,7 +15,6 @@ type ExtractObjectTypes<T> = {
 };
 
 const macroOptionsToTypes: ExtractObjectTypes<MacroOptions> = {
-  serverSideOnly: 'boolean',
   webpackChunkName: 'string',
 };
 
@@ -30,11 +28,6 @@ export function extractMacroOptions(optionsNode: t.ObjectExpression): MacroOptio
       if (propertyKey !== macroOptionName) continue;
 
       switch (macroOptionType) {
-        case 'boolean':
-          if (!t.isBooleanLiteral(property.value)) {
-            throw new Error(`The ${macroOptionName} property must be a boolean literal.`);
-          }
-          break;
         case 'string':
           if (!t.isStringLiteral(property.value)) {
             throw new Error(`The ${macroOptionName} property must be a string literal.`);

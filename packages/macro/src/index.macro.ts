@@ -113,12 +113,6 @@ const macro: MacroHandler = ({ references, state }) => {
         filenameNode.value,
       );
 
-      if (macroOptions.serverSideOnly && side !== 'server') {
-        // replace the call to useSSRComputation with null
-        nodePath.parentPath?.replaceWith(t.nullLiteral());
-        return;
-      }
-
       const extensions = ['.ts', '.js', '.tsx', '.jsx'];
       if (!extensions.some(extension => fs.existsSync(absolutePath + extension))) {
         throw new Error(`The file ${filenameNode}(.js/.ts/.jsx/.tsx) does not exist.`);
@@ -175,15 +169,6 @@ const macro: MacroHandler = ({ references, state }) => {
       const relativePathToCwd = path.relative(process.cwd(), absolutePath);
       parent.arguments.push(optionsNode);
       parent.arguments.push(t.stringLiteral(relativePathToCwd));
-
-      // if serverSideOnly is true, replace the call expression with (() => null)(useSSRComputation()).
-      // It makes the function return null on the server sides to match the client side value.
-      if (macroOptions.serverSideOnly) {
-        const nullLiteral = t.nullLiteral();
-        const arrowFunction = t.arrowFunctionExpression([], nullLiteral);
-        const callExpression = t.callExpression(arrowFunction, [parent]);
-        nodePath.parentPath?.replaceWith(callExpression);
-      }
     }
   });
 
