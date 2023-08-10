@@ -29,6 +29,6 @@
     "packages/runtime"
   ],
   "devDependencies": {
-    "lerna": "^7.0.2"
+    "lerna": "^7.1.5"
   }
 }
