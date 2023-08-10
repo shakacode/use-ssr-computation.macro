@@ -12,7 +12,7 @@ export default function useSSRComputation_Server(fn: (...dependencies: any[]) =>
     const cacheKey = calculateCacheKey(relativePathToCwd, dependencies);
     // check if result is a promise
     if (result && typeof result.then === 'function') {
-      cache[cacheKey] = result.then(asyncResult => cache[cacheKey] = asyncResult);
+      throw new Error('useSSRComputation does not support async functions on the server side.');
     } else {
       cache[cacheKey] = result;
     }

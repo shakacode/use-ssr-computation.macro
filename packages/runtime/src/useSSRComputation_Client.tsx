@@ -3,7 +3,7 @@ import { useSSRCache } from "./SSRCacheProvider";
 import { calculateCacheKey, Dependency, Options, parseDependencies } from "./utils";
 
 export default function useSSRComputation_Client(importFn: () => Promise<{ default: (...dependencies: Dependency[]) => any }>, dependencies: any[], options: Options, relativePathToCwd: string) {
-  const [fn, setFn] = useState<(...dependencies: Dependency[])=>any>();
+  const [, forceUpdate] = useState(0);
   const cache = useSSRCache();
   const parsedDependencies = parseDependencies(dependencies);
   const skip = !!options.skip;
@@ -18,25 +18,27 @@ export default function useSSRComputation_Client(importFn: () => Promise<{ defau
     let isMounted = true;
     importFn().then((module) => {
       if (!isMounted) return;
-      // Wrapping to an empty function to avoid calling the function immediately.
-      // https://medium.com/swlh/how-to-store-a-function-with-the-usestate-hook-in-react-8a88dd4eede1
-      setFn(() => module.default);
+      const result = module.default();
+      if (result && typeof result.then === 'function') {
+        result.then(asyncResult => {
+          if (!isMounted) return;
+          cache[cacheKey] = asyncResult;
+          forceUpdate((x) => x + 1);
+        });
+      } else {
+        cache[cacheKey] = result;
+        forceUpdate((x) => x + 1);
+      }
     });
 
     return () => {
       isMounted = false;
     };
-  }, [isCacheHit, importFn, skip]);
-
-  const result = useMemo(()=> {
-    if (!fn || skip) return null;
-
-    return fn(...parsedDependencies);
-  }, [fn, cacheKey, skip]);
+  }, [isCacheHit, importFn, skip, cacheKey]);
 
   if (isCacheHit && !skip) {
     return cache[cacheKey];
   }
 
-  return result;
+  return null;
 }
