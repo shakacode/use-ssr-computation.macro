@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSSRCache } from "./SSRCacheProvider";
 import { calculateCacheKey, Dependency, Options, parseDependencies } from "./utils";
 
