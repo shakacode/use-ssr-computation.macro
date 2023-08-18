@@ -6,11 +6,7 @@ pluginTest('no usage', `
 
 pluginTest('single-import', `
   import { useSSRComputation } from "../lib/index.macro"
-
-  type Aa = {
-    a: string;
-  };
-  const x = useSSRComputation("./a.ssr-computation", []) as Aa;
+  const x = useSSRComputation("./a.ssr-computation", []);
 `, `
   Imports the macro and uses it to import a single SSR computation file.
   On server side, it will be statically imported and executed.
@@ -35,23 +31,6 @@ pluginTest('used-inside-react-component', `
 
   const ReactComponent = () => {
     const x = useSSRComputation("./a.ssr-computation", []);
-    // To make sure that the macro generate unqiue names
-    const _dynamicImport_ = null;
-  }
-`);
-
-
-
-pluginTest('used-inside-react-component', `
-  import React from "react"
-  import { useSSRComputation } from "../lib/index.macro"
-
-  type Aa = {
-    a: string;
-  }
-
-  const ReactComponent = () => {
-    const x = useSSRComputation("./a.ssr-computation", []) as Aa;
     // To make sure that the macro generate unqiue names
     const _dynamicImport_ = null;
   }

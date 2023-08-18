@@ -12,9 +12,6 @@ export function pluginTest(testName: string, testBody: any, testDescription: str
       restartTitleNumbering: true,
       babelOptions: {
         filename: `${testName}.test.ts`,
-        presets: [
-          '@babel/preset-typescript',
-        ]
       },
       tests: {
         [`${side}-${testDescription || testName}`]: testBody,

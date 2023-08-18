@@ -122,16 +122,16 @@ const macro: MacroHandler = ({ references, state }) => {
       const isTypescript = currentFilename.endsWith('.ts') || currentFilename.endsWith('.tsx');
       // check the type of variable that will be assigned to the result of the macro
       if (isTypescript) {
-        const pp = nodePath.parentPath?.parent;
-        if (t.isTSAsExpression(pp)) {
-          const parsedToType = pp.typeAnnotation;
-          if (t.isTSTypeReference(parsedToType)) {
-            const typeName = parsedToType.typeName;
-            if (t.isIdentifier(typeName)) {
-              throw new Error(typeName.)
-            }
-          }
-        }
+        // const pp = nodePath.parentPath?.parent;
+        // if (t.isTSAsExpression(pp)) {
+        //   const parsedToType = pp.typeAnnotation;
+        //   if (t.isTSTypeReference(parsedToType)) {
+        //     const typeName = parsedToType.typeName;
+        //     if (t.isIdentifier(typeName)) {
+        //       throw new Error(typeName.)
+        //     }
+        //   }
+        // }
 
       }
 

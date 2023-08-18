@@ -51,10 +51,11 @@ export const getTypeSource = (typeName: string, ast: t.File, filepath: string): 
       path.dirname(filepath),
       importPath
     ) + ".ts";
+    const importFileRelativePath = path.relative(process.cwd(), importFilepath);
 
-    const babelOptions = babel.loadOptions({ filename: importFilepath }) as babel.TransformOptions;
+    const babelOptions = babel.loadOptions({ filename: importFileRelativePath }) as babel.TransformOptions;
     const importAst = babel.parseSync(
-      fs.readFileSync(importFilepath, "utf-8"),
+      fs.readFileSync(importFileRelativePath, "utf-8"),
       babelOptions
     );
 
@@ -63,7 +64,7 @@ export const getTypeSource = (typeName: string, ast: t.File, filepath: string): 
     }
 
     const typeNameInTheOtherFile = t.isImportSpecifier(importSpecificer) ? t.isIdentifier(importSpecificer.imported) ? importSpecificer.imported.name : importSpecificer.imported.value : typeName;
-    const importTypeSource = getTypeSource(typeNameInTheOtherFile, importAst, importFilepath);
+    const importTypeSource = getTypeSource(typeNameInTheOtherFile, importAst, importFileRelativePath);
     return importTypeSource;
   }
 
