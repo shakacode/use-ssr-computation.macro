@@ -6,6 +6,7 @@ import * as t from "@babel/types";
 import { Dependency } from "@popmenu/use-ssr-computation.runtime/src/utils"
 
 import { extractMacroOptions, Options } from './utils';
+import { getReturnTypeOfTheDefaultExportFunction, getTypeSourceFromAst, isSameTypeSource } from "./type-safe-checker";
 
 function getProgramPath (nodePath: NodePath): NodePath<t.Program> {
   const programPath = nodePath.findParent((path) => path.isProgram()) as NodePath<t.Program>;
@@ -14,6 +15,8 @@ function getProgramPath (nodePath: NodePath): NodePath<t.Program> {
   }
   return programPath;
 }
+
+const isTSFile = (filepath: string) => filepath.endsWith(".ts") || filepath.endsWith(".tsx");
 
 function addImportStatement(importName: string, importPath: string, isDefault: boolean, nodePath: NodePath) {
   const programPath = getProgramPath(nodePath);
@@ -115,24 +118,28 @@ const macro: MacroHandler = ({ references, state }) => {
 
       const extensions = ['.ts', '.js', '.tsx', '.jsx'];
       if (!extensions.some(extension => fs.existsSync(absolutePath + extension))) {
-        throw new Error(`The file ${filenameNode}(.js/.ts/.jsx/.tsx) does not exist.`);
+        throw new Error(`The file ${filenameNode.value}(.js/.ts/.jsx/.tsx) does not exist.`);
       }
 
       // check if the macro is called inside a typescript file
-      const isTypescript = currentFilename.endsWith('.ts') || currentFilename.endsWith('.tsx');
+      const isTypescript = isTSFile(currentFilename) && isTSFile(absolutePath);
       // check the type of variable that will be assigned to the result of the macro
       if (isTypescript) {
-        // const pp = nodePath.parentPath?.parent;
-        // if (t.isTSAsExpression(pp)) {
-        //   const parsedToType = pp.typeAnnotation;
-        //   if (t.isTSTypeReference(parsedToType)) {
-        //     const typeName = parsedToType.typeName;
-        //     if (t.isIdentifier(typeName)) {
-        //       throw new Error(typeName.)
-        //     }
-        //   }
-        // }
+        const computationFileTypeSource = getReturnTypeOfTheDefaultExportFunction(absolutePath);
+        const pp = nodePath.parentPath?.parent;
 
+        if (!t.isTSAsExpression(pp) || !t.isTSTypeReference(pp.typeAnnotation) || !t.isIdentifier(pp.typeAnnotation.typeName)) {
+          throw new Error(`The macro must be called inside a type assertion. For example:
+            const x = useSSRComputation("./a.ssr-computation", []) as number;
+          `);
+        }
+    
+        const typeName = pp.typeAnnotation.typeName;
+        const typeSource = getTypeSourceFromAst(typeName.name, getProgramPath(nodePath).node, currentFilename);
+
+        if (!isSameTypeSource(computationFileTypeSource, typeSource)) {
+          throw new Error(`The type used in the type assertion must match the return type of the function in the .ssr-computation file.`);
+        }
       }
 
       const useSSRComputationFunctionName = `useSSRComputation_${side.charAt(0).toUpperCase() + side.slice(1)}`; 

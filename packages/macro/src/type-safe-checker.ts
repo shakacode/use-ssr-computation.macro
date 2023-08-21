@@ -8,7 +8,19 @@ type TypeSource = t.TSBaseType | {
   filePath: string;
 };
 
-export const getTypeSource = (typeName: string, ast: t.File, filepath: string): TypeSource => {
+export const isSameTypeSource = (a: TypeSource, b: TypeSource) => {
+  if (t.isTSBaseType(a) && t.isTSBaseType(b)) {
+    return a.type === b.type;
+  }
+
+  if (t.isTSBaseType(a) || t.isTSBaseType(b)) {
+    return false;
+  }
+
+  return a.typeName === b.typeName && a.filePath === b.filePath;
+}
+
+export const getTypeSourceFromAst = (typeName: string, ast: t.Node, filepath: string): TypeSource => {
   let typeDeclaration: any = null;
   let importDeclaration: any = null;
   babel.traverse(ast, {
@@ -64,7 +76,7 @@ export const getTypeSource = (typeName: string, ast: t.File, filepath: string): 
     }
 
     const typeNameInTheOtherFile = t.isImportSpecifier(importSpecificer) ? t.isIdentifier(importSpecificer.imported) ? importSpecificer.imported.name : importSpecificer.imported.value : typeName;
-    const importTypeSource = getTypeSource(typeNameInTheOtherFile, importAst, importFileRelativePath);
+    const importTypeSource = getTypeSourceFromAst(typeNameInTheOtherFile, importAst, importFileRelativePath);
     return importTypeSource;
   }
 
@@ -98,7 +110,7 @@ export const getReturnTypeOfTheDefaultExportFunction = (filePath: string) => {
   const returnType = returnTypeAnnotation.typeAnnotation;
   if (t.isTSTypeReference(returnType) && t.isIdentifier(returnType.typeName)) {
     const typeName = returnType.typeName.name;
-    return getTypeSource(typeName, ast, filePath);
+    return getTypeSourceFromAst(typeName, ast, filePath);
   }
 
   throw new Error("The return type is not defined");

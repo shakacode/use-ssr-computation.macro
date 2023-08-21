@@ -6,9 +6,6 @@ const isSSR = typeof window === 'undefined';
 
 export const SSRCacheProvider = ({ children, cache }: { children: JSX.Element | JSX.Element[]; cache?: SSRCache }) => {
   let cacheValue = (isSSR ? cache : window.__SSR_CACHE__) || {};
-  if (!isSSR) {
-    Object.freeze(cacheValue);
-  }
 
   return <Context.Provider value={cacheValue}>{children}</Context.Provider>;
 }
