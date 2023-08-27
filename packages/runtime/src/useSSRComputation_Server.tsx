@@ -1,4 +1,5 @@
 import { useSSRCache } from "./SSRCacheProvider";
+import { UnsupportedAsyncResultOnServerSideError, handleError } from "./errorHandler";
 import { Options, calculateCacheKey } from "./utils";
 
 export default function useSSRComputation_Server(fn: (...dependencies: any[]) => any, dependencies: any[], options: Options, relativePathToCwd: string) {
@@ -12,7 +13,7 @@ export default function useSSRComputation_Server(fn: (...dependencies: any[]) =>
     const cacheKey = calculateCacheKey(relativePathToCwd, dependencies);
     // check if result is a promise
     if (result && typeof result.then === 'function') {
-      throw new Error('useSSRComputation does not support async functions on the server side.');
+      handleError(new UnsupportedAsyncResultOnServerSideError(result));
     } else {
       cache[cacheKey] = result;
     }
