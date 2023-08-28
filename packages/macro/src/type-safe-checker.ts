@@ -3,21 +3,27 @@ import * as t from "@babel/types";
 import fs from "fs";
 import path from "path";
 
-type TypeSource = t.TSBaseType | {
+type CustomTypeSource = {
   typeName: string;
   filePath: string;
 };
 
+type TypeSource = t.TSBaseType | CustomTypeSource;
+
+const isCustomTypeSource = (typeSource: TypeSource): typeSource is CustomTypeSource => {
+  return (typeof typeSource === "object" && "typeName" in typeSource && "filePath" in typeSource);
+}
+
 export const isSameTypeSource = (a: TypeSource, b: TypeSource) => {
-  if (t.isTSBaseType(a) && t.isTSBaseType(b)) {
-    return a.type === b.type;
+  if (isCustomTypeSource(a) && isCustomTypeSource(b)) {
+    return a.typeName === b.typeName && a.filePath === b.filePath;
   }
 
-  if (t.isTSBaseType(a) || t.isTSBaseType(b)) {
+  if (isCustomTypeSource(a) || isCustomTypeSource(b)) {
     return false;
   }
 
-  return a.typeName === b.typeName && a.filePath === b.filePath;
+  return a.type === b.type;
 }
 
 export const getTypeSourceFromAst = (typeName: string, ast: t.Node, filepath: string): TypeSource => {

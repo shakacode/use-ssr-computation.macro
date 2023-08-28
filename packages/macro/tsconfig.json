@@ -7,5 +7,6 @@
       "outDir": "lib",
       "allowJs": true,
   },
-  "include": ["src", "tests/type-safe-checker.test.ts"]
+  "include": ["src"],
+  "exclude": ["src/examples", "**/**.test.ts"]
 }
