@@ -1,4 +1,9 @@
-import { ClientFunction, Dependency, ServerFunction } from "./utils";
+import {
+  ClientComputationFunction,
+  Dependency,
+  ServerComputationFunction,
+  SSRComputationFunction,
+} from "./utils";
 
 export class InternalUseSSRComputationError extends Error {
   result: any;
@@ -39,10 +44,10 @@ export const handleError = (error: UseSSRComputationError) => {
   }
 }
 
-export const wrapErrorHandler = <T extends ServerFunction | ClientFunction>(useSSRComputation: T): T => {
-  return ((...args: any[]) => {
+export const wrapErrorHandler = <T extends ServerComputationFunction | ClientComputationFunction>(useSSRComputation: SSRComputationFunction<T>): SSRComputationFunction<T> => {
+  return (...args: Parameters<SSRComputationFunction<T>>) => {
     try {
-      return (useSSRComputation as (...args: any) => any)(...args);
+      return useSSRComputation(...args);
     } catch (error) {
       let message = '';
       let result = null;
@@ -59,5 +64,5 @@ export const wrapErrorHandler = <T extends ServerFunction | ClientFunction>(useS
       handleError(useSSRComputationError);
       return result;
     }
-  }) as T;
+  };
 }
