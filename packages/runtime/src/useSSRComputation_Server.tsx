@@ -1,8 +1,8 @@
 import { useSSRCache } from "./SSRCacheProvider";
-import { UnsupportedAsyncResultOnServerSideError, handleError } from "./errorHandler";
-import { Options, calculateCacheKey } from "./utils";
+import { InternalUseSSRComputationError, wrapErrorHandler } from "./errorHandler";
+import { calculateCacheKey, ServerFunction } from "./utils";
 
-export default function useSSRComputation_Server(fn: (...dependencies: any[]) => any, dependencies: any[], options: Options, relativePathToCwd: string) {
+const useSSRComputation_Server: ServerFunction = (fn, dependencies, options, relativePathToCwd) => {
   const cache = useSSRCache();
   if (options.skip) return null;
 
@@ -13,7 +13,10 @@ export default function useSSRComputation_Server(fn: (...dependencies: any[]) =>
     const cacheKey = calculateCacheKey(relativePathToCwd, dependencies);
     // check if result is a promise
     if (result && typeof result.then === 'function') {
-      handleError(new UnsupportedAsyncResultOnServerSideError(result));
+      throw new InternalUseSSRComputationError(
+        'useSSRComputation does not support async functions on the server side',
+        result,
+      );
     } else {
       cache[cacheKey] = result;
     }
@@ -21,3 +24,5 @@ export default function useSSRComputation_Server(fn: (...dependencies: any[]) =>
 
   return result;
 }
+
+export default wrapErrorHandler(useSSRComputation_Server);
