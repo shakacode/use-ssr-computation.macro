@@ -17,6 +17,8 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - name: Install dependencies and build 🔧
         run: yarn install --frozen-lockfile
+      - name: find changes
+        run: lerna changed --ignore-changes '**/*.md' '**/test/*' '**/__snapshots__/*' '**/*.test.{ts,tsx,js,jsx}'
       - name: Ensure that "lerna version" has been run
         run: |
           changed=$(yarn run --silent changed)
