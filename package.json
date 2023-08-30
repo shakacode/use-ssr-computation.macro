@@ -4,7 +4,8 @@
   "license": "MIT",
   "scripts": {
     "publish": "lerna publish",
-    "yalc": "cd packages/macro && yalc publish && cd ../runtime && yalc publish"
+    "yalc": "cd packages/macro && yalc publish && cd ../runtime && yalc publish",
+    "test": "cd packages/macro && yarn test && cd ../runtime && yarn test"
   },
   "homepage": "https://github.com/Popmenu/use-ssr-computation.macro",
   "bugs": {
