@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSSRCache } from "./SSRCacheProvider";
-import { calculateCacheKey, Dependency, Options, parseDependencies } from "./utils";
+import { calculateCacheKey, ClientFunction, Dependency, parseDependencies } from "./utils";
+import { wrapErrorHandler } from "./errorHandler";
 
-export default function useSSRComputation_Client(importFn: () => Promise<{ default: (...dependencies: Dependency[]) => any }>, dependencies: any[], options: Options, relativePathToCwd: string) {
+const useSSRComputation_Client: ClientFunction = (importFn, dependencies, options, relativePathToCwd) => {
   const [fn, setFn] = useState<(...dependencies: Dependency[])=>any>();
+  const [, forceUpdate] = useState(0);
   const cache = useSSRCache();
   const parsedDependencies = parseDependencies(dependencies);
   const skip = !!options.skip;
@@ -12,6 +14,7 @@ export default function useSSRComputation_Client(importFn: () => Promise<{ defau
   // and it's not affected by the file that calls it
   const cacheKey = calculateCacheKey(relativePathToCwd, parsedDependencies);
   const isCacheHit = cache?.[cacheKey];
+
   useEffect(() => {
     if (isCacheHit || skip) return;
 
@@ -34,9 +37,26 @@ export default function useSSRComputation_Client(importFn: () => Promise<{ defau
     return fn(...parsedDependencies);
   }, [fn, cacheKey, skip]);
 
-  if (isCacheHit && !skip) {
-    return cache[cacheKey];
+  useEffect(() => {
+    let isMounted = true;
+
+    if (result && typeof result.then === 'function') {
+      result.then(asyncResult => {
+        if (!isMounted) return;
+        cache[cacheKey] = asyncResult;
+        forceUpdate((x) => x + 1);
+      });
+    }
+  }, [result, cacheKey]);
+
+  if (skip) {
+    return null;
   }
 
-  return result;
+  if (result && typeof result.then !== 'function') {
+    cache[cacheKey] = result;
+  }
+  return cache[cacheKey];
 }
+
+export default wrapErrorHandler(useSSRComputation_Client);

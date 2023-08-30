@@ -34,3 +34,16 @@ export const calculateCacheKey = (modulePath: string, dependencies: Dependency[]
 
   return `${modulePath}::${dependenciesString}`;
 }
+
+export type ServerComputationFunction = (...dependencies: any[]) => any;
+export type ClientComputationFunction = () => Promise<{ default: (...dependencies: any[]) => any }>
+
+export type SSRComputationFunction<Fn extends ServerComputationFunction | ClientComputationFunction> = (
+  fn: Fn,
+  dependencies: any[],
+  options: any,
+  relativePathToCwd: string
+) => any;
+
+export type ServerFunction = SSRComputationFunction<ServerComputationFunction>;
+export type ClientFunction = SSRComputationFunction<ClientComputationFunction>;
