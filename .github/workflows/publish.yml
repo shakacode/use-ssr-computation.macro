@@ -24,9 +24,9 @@ jobs:
             echo "Error: Found changed packages. Please run 'yarn run version' before pushing changes." >&2
             exit 1
           fi
-      - name: Install dependencies and build 🔧
+      - name: Install dependencies 🔧
         run: yarn install --frozen-lockfile
       - name: Publish package on NPM 📦
-        run: yarn run lerna publish from-package --yes --dist-tag experimental
+        run: yarn run publish --dist-tag experimental
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
