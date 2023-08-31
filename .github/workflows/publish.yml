@@ -19,6 +19,13 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - name: Install dependencies 🔧
         run: yarn install --frozen-lockfile
+      - name: unpublish packages
+        run: |
+          npm unpublish @popmenu/use-ssr-computation.macro@1.2.2
+          npm unpublish @popmenu/use-ssr-computation.runtime@1.1.3
+          exit 1
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Ensure that "lerna version" has been run
         run: |
           changed=$(yarn run --silent changed || true)
