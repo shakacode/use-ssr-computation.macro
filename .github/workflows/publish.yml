@@ -17,8 +17,6 @@ jobs:
         with:
           node-version: '14.x'
           registry-url: 'https://registry.npmjs.org'
-      - name: Install dependencies and build 🔧
-        run: yarn install --frozen-lockfile
       - name: Ensure that "lerna version" has been run
         run: |
           changed=$(yarn run --silent changed)
@@ -26,6 +24,8 @@ jobs:
             echo "Error: Found changed packages. Please run 'yarn run version' before pushing changes." >&2
             exit 1
           fi
+      - name: Install dependencies and build 🔧
+        run: yarn install --frozen-lockfile
       - name: Publish package on NPM 📦
         run: yarn run lerna publish from-package --yes --dist-tag experimental
         env:
