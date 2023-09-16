@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSSRCache } from "./SSRCacheProvider";
-import { calculateCacheKey, ClientFunction, Dependency, parseDependencies } from "./utils";
+import { calculateCacheKey, ClientFunction, Dependency, GlobalOptions, parseDependencies } from "./utils";
 import { wrapErrorHandler } from "./errorHandler";
 
 const useSSRComputation_Client: ClientFunction = (importFn, dependencies, options, relativePathToCwd) => {
-  const [fn, setFn] = useState<(...dependencies: Dependency[])=>any>();
+  const [fn, setFn] = useState<(globalOptions: GlobalOptions, ...dependencies: Dependency[])=>any>();
   const [, forceUpdate] = useState(0);
-  const cache = useSSRCache();
+  const { cache, globalOptions } = useSSRCache();
   const parsedDependencies = parseDependencies(dependencies);
   const skip = !!options.skip;
 
   // relativePathToCwd is used to make sure that the cache key is unique for each module
   // and it's not affected by the file that calls it
-  const cacheKey = calculateCacheKey(relativePathToCwd, parsedDependencies);
+  const cacheKey = calculateCacheKey(relativePathToCwd, parsedDependencies, globalOptions);
   const isCacheHit = cache?.[cacheKey];
 
   useEffect(() => {
@@ -34,7 +34,7 @@ const useSSRComputation_Client: ClientFunction = (importFn, dependencies, option
   const result = useMemo(()=> {
     if (!fn || skip) return null;
 
-    return fn(...parsedDependencies);
+    return fn(globalOptions, ...parsedDependencies);
   }, [fn, cacheKey, skip]);
 
   useEffect(() => {

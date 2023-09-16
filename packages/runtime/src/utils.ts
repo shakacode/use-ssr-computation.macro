@@ -1,4 +1,5 @@
 export type Dependency = number | string | { uniqueId: string; }
+export type GlobalOptions = Dependency | undefined;
 
 export type Options = {
   skip?: boolean,
@@ -21,22 +22,25 @@ export function parseDependencies(dependencies: any): Dependency[] {
   });
 }
 
-export const calculateCacheKey = (modulePath: string, dependencies: Dependency[]): string => {
-  const dependenciesString = dependencies.map((dependency) => {
-    if (typeof dependency === 'number') {
-      return dependency.toString();
-    }
-    if (typeof dependency === 'string') {
-      return dependency;
-    }
-    return dependency.uniqueId;
-  }).join(',');
-
-  return `${modulePath}::${dependenciesString}`;
+const mapDependencyToValue = (dependency: Dependency): string => {
+  if (typeof dependency === 'number') {
+    return dependency.toString();
+  }
+  if (typeof dependency === 'string') {
+    return dependency;
+  }
+  return dependency.uniqueId;
 }
 
-export type ServerComputationFunction = (...dependencies: any[]) => any;
-export type ClientComputationFunction = () => Promise<{ default: (...dependencies: any[]) => any }>
+export const calculateCacheKey = (modulePath: string, dependencies: Dependency[], globalOptions: GlobalOptions): string => {
+  const dependenciesString = dependencies.map(mapDependencyToValue).join(',');
+  const globalOptionsString = globalOptions ? `::${mapDependencyToValue(globalOptions)}` : '';
+
+  return `${modulePath}${globalOptionsString}::${dependenciesString}`;
+}
+
+export type ServerComputationFunction = (globalOptions, ...dependencies: any[]) => any;
+export type ClientComputationFunction = () => Promise<{ default: (globalOptions, ...dependencies: any[]) => any }>
 
 export type SSRComputationFunction<Fn extends ServerComputationFunction | ClientComputationFunction> = (
   fn: Fn,
