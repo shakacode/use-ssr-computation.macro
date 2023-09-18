@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSSRCache } from "./SSRCacheProvider";
 import { calculateCacheKey, ClientFunction, Dependency, GlobalOptions, parseDependencies } from "./utils";
 import { wrapErrorHandler } from "./errorHandler";
+import { useLiveResult } from "./useLiveResult";
 
 const useSSRComputation_Client: ClientFunction = (importFn, dependencies, options, relativePathToCwd) => {
   const [fn, setFn] = useState<(globalOptions: GlobalOptions, ...dependencies: Dependency[])=>any>();
@@ -13,7 +14,8 @@ const useSSRComputation_Client: ClientFunction = (importFn, dependencies, option
   // relativePathToCwd is used to make sure that the cache key is unique for each module
   // and it's not affected by the file that calls it
   const cacheKey = calculateCacheKey(relativePathToCwd, parsedDependencies, globalOptions);
-  const isCacheHit = cache?.[cacheKey];
+  const cachedValue = cache?.[cacheKey];
+  const isCacheHit = !!cachedValue;
 
   useEffect(() => {
     if (isCacheHit || skip) return;
@@ -31,11 +33,11 @@ const useSSRComputation_Client: ClientFunction = (importFn, dependencies, option
     };
   }, [isCacheHit, importFn, skip]);
 
-  const result = useMemo(()=> {
-    if (!fn || skip) return null;
-
-    return fn(globalOptions, ...parsedDependencies);
-  }, [fn, cacheKey, skip]);
+  const result = useLiveResult(dependencies, fn, {
+    cachedValue,
+    cacheKey,
+    skip,
+  });
 
   useEffect(() => {
     let isMounted = true;
