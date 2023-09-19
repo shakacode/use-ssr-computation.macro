@@ -1,5 +1,4 @@
 export type Dependency = number | string | { uniqueId: string; }
-export type GlobalOptions = Dependency | undefined;
 
 export type Options = {
   skip?: boolean,
@@ -32,15 +31,14 @@ const mapDependencyToValue = (dependency: Dependency): string => {
   return dependency.uniqueId;
 }
 
-export const calculateCacheKey = (modulePath: string, dependencies: Dependency[], globalOptions: GlobalOptions): string => {
+export const calculateCacheKey = (modulePath: string, dependencies: Dependency[]): string => {
   const dependenciesString = dependencies.map(mapDependencyToValue).join(',');
-  const globalOptionsString = globalOptions ? `::${mapDependencyToValue(globalOptions)}` : '';
 
-  return `${modulePath}${globalOptionsString}::${dependenciesString}`;
+  return `${modulePath}::${dependenciesString}`;
 }
 
-export type ServerComputationFunction = (globalOptions, ...dependencies: any[]) => any;
-export type ClientComputationFunction = () => Promise<{ default: (globalOptions, ...dependencies: any[]) => any }>
+export type ServerComputationFunction = (...dependencies: any[]) => any;
+export type ClientComputationFunction = () => Promise<{ default: (...dependencies: any[]) => any }>
 
 export type SSRComputationFunction<Fn extends ServerComputationFunction | ClientComputationFunction> = (
   fn: Fn,
@@ -51,3 +49,22 @@ export type SSRComputationFunction<Fn extends ServerComputationFunction | Client
 
 export type ServerFunction = SSRComputationFunction<ServerComputationFunction>;
 export type ClientFunction = SSRComputationFunction<ClientComputationFunction>;
+export type Subscription = {
+  unsubscribe: () => void;
+}
+export type Observable<T> = {
+  current: T;
+  subscribe: ({
+                next,
+                error,
+              }: {
+    next: (value: T) => void;
+    error?: (error: any) => void;
+  }) => Subscription;
+}
+export const isObservable = <T>(obj: any): obj is Observable<T> => {
+  return obj && typeof obj.subscribe === "function" && "current" in obj;
+};
+export const isPromise = <T>(obj: any): obj is Promise<T> => {
+  return obj && typeof obj.then === "function";
+};

@@ -1,8 +1,6 @@
-import React from 'react';
 import { renderHook } from '@testing-library/react-hooks';
 import { setErrorHandler } from "./errorHandler";
 import useSSRComputation_Server from "./useSSRComputation_Server";
-import { SSRCacheProvider } from "./SSRCacheProvider";
 
 test('useSSRComputation_Server should trigger "errorHandler" when get called with an async function', () => {
   const asyncFn = () => Promise.resolve('result');
@@ -11,10 +9,7 @@ test('useSSRComputation_Server should trigger "errorHandler" when get called wit
   const errorHandler = jest.fn();
 
   setErrorHandler(errorHandler);
-
-  const wrapper = ({ children }) => <SSRCacheProvider cache={{}}>{children}</SSRCacheProvider>;
-
-  renderHook(() => useSSRComputation_Server(asyncFn, dependencies, {}, relativePathToCwd), { wrapper });
+  renderHook(() => useSSRComputation_Server(asyncFn, dependencies, {}, relativePathToCwd));
 
   expect(errorHandler).toHaveBeenCalledWith(
     expect.objectContaining({

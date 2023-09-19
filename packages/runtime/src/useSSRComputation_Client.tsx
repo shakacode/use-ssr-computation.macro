@@ -1,24 +1,42 @@
-import { useEffect, useState } from "react";
-import { useSSRCache } from "./SSRCacheProvider";
-import { calculateCacheKey, ClientFunction, Dependency, GlobalOptions, parseDependencies } from "./utils";
+import { useEffect, useMemo, useState } from "react";
+import { calculateCacheKey, ClientFunction, Dependency, parseDependencies } from "./utils";
 import { wrapErrorHandler } from "./errorHandler";
-import { useLiveResult } from "./useLiveResult";
+import { useAsyncResultManager } from "./useAsyncResultManager";
+import { getSSRCache } from "./ssrCache";
+import { runOnSubscriptionsResumed } from "./subscriptions";
 
 const useSSRComputation_Client: ClientFunction = (importFn, dependencies, options, relativePathToCwd) => {
-  const [fn, setFn] = useState<(globalOptions: GlobalOptions, ...dependencies: Dependency[])=>any>();
-  const [, forceUpdate] = useState(0);
-  const { cache, globalOptions } = useSSRCache();
+  const [fn, setFn] = useState<(...dependencies: Dependency[])=>any>();
+  const [forceExecution, setForceExecution] = useState(false);
+  const cache = getSSRCache();
   const parsedDependencies = parseDependencies(dependencies);
   const skip = !!options.skip;
 
   // relativePathToCwd is used to make sure that the cache key is unique for each module
   // and it's not affected by the file that calls it
-  const cacheKey = calculateCacheKey(relativePathToCwd, parsedDependencies, globalOptions);
-  const cachedValue = cache?.[cacheKey];
+  const cacheKey = calculateCacheKey(relativePathToCwd, parsedDependencies);
+  const cachedValue = cache?.[cacheKey]?.result;
+  const isSubscription = cache?.[cacheKey]?.isSubscription || false;
   const isCacheHit = !!cachedValue;
 
   useEffect(() => {
-    if (isCacheHit || skip) return;
+    let isMounted = true;
+
+    if (isSubscription) {
+      void runOnSubscriptionsResumed(() => {
+        if (isMounted) {
+          setForceExecution(true);
+        }
+      });
+    }
+
+    return () => {
+      isMounted = false;
+    }
+  }, [isSubscription]);
+
+  useEffect(() => {
+    if ((isCacheHit && !forceExecution) || skip) return;
 
     let isMounted = true;
     importFn().then((module) => {
@@ -31,34 +49,23 @@ const useSSRComputation_Client: ClientFunction = (importFn, dependencies, option
     return () => {
       isMounted = false;
     };
-  }, [isCacheHit, importFn, skip]);
+  }, [isCacheHit, importFn, skip, forceExecution]);
 
-  const result = useLiveResult(dependencies, fn, {
-    cachedValue,
-    cacheKey,
-    skip,
-  });
+  const result = useMemo(()=> {
+    if (!fn || skip) return null;
 
-  useEffect(() => {
-    let isMounted = true;
+    return fn(...parsedDependencies);
+  }, [fn, cacheKey, skip]);
 
-    if (result && typeof result.then === 'function') {
-      result.then(asyncResult => {
-        if (!isMounted) return;
-        cache[cacheKey] = asyncResult;
-        forceUpdate((x) => x + 1);
-      });
-    }
-  }, [result, cacheKey]);
+  const currentResult = useAsyncResultManager(result, cachedValue);
 
-  if (skip) {
-    return null;
+  if (!skip) {
+    cache[cacheKey] = {
+      result: currentResult,
+      isSubscription,
+    };
   }
-
-  if (result && typeof result.then !== 'function') {
-    cache[cacheKey] = result;
-  }
-  return cache[cacheKey];
+  return currentResult;
 }
 
 export default wrapErrorHandler(useSSRComputation_Client);
