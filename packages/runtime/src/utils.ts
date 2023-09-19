@@ -49,9 +49,11 @@ export type SSRComputationFunction<Fn extends ServerComputationFunction | Client
 
 export type ServerFunction = SSRComputationFunction<ServerComputationFunction>;
 export type ClientFunction = SSRComputationFunction<ClientComputationFunction>;
+
 export type Subscription = {
   unsubscribe: () => void;
 }
+
 export type Observable<T> = {
   current: T;
   subscribe: ({
@@ -62,9 +64,11 @@ export type Observable<T> = {
     error?: (error: any) => void;
   }) => Subscription;
 }
+
 export const isObservable = <T>(obj: any): obj is Observable<T> => {
   return obj && typeof obj.subscribe === "function" && "current" in obj;
 };
+
 export const isPromise = <T>(obj: any): obj is Promise<T> => {
   return obj && typeof obj.then === "function";
 };
