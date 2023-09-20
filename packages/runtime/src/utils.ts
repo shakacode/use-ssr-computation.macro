@@ -54,15 +54,14 @@ export type Subscription = {
   unsubscribe: () => void;
 }
 
+export type Observer<T> = {
+  next: (value: T) => void;
+  error?: (error: any) => void;
+}
+
 export type Observable<T> = {
-  current: T;
-  subscribe: ({
-                next,
-                error,
-              }: {
-    next: (value: T) => void;
-    error?: (error: any) => void;
-  }) => Subscription;
+  current: T | null;
+  subscribe: (observer: Observer<T>) => Subscription;
 }
 
 export const isObservable = <T>(obj: any): obj is Observable<T> => {

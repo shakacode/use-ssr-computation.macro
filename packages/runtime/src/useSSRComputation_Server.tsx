@@ -17,10 +17,15 @@ const useSSRComputation_Server: ServerFunction = (fn, dependencies, options, rel
         'useSSRComputation does not support async functions on the server side',
         result,
       );
+    } else if (isObservable(result)) {
+      cache[cacheKey] = {
+        result: result.current,
+        isSubscription: true,
+      }
     } else {
       cache[cacheKey] = {
         result,
-        isSubscription: isObservable(result),
+        isSubscription: false,
       };
     }
   }

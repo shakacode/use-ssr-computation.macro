@@ -52,7 +52,8 @@ const useSSRComputation_Client: ClientFunction = (importFn, dependencies, option
   }, [isCacheHit, importFn, skip, forceExecution]);
 
   const result = useMemo(()=> {
-    if (!fn || skip) return null;
+    if (skip) return null;
+    if (!fn) return cachedValue || null;
 
     return fn(...parsedDependencies);
   }, [fn, cacheKey, skip]);
