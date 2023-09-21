@@ -1,5 +1,5 @@
 export type SSRCacheItem<TResult> = {
-  result: TResult | null;
+  result: TResult;
   isSubscription: boolean;
 }
 export type SSRCache = Record<string, SSRCacheItem<unknown>>;

@@ -44,8 +44,8 @@ export const handleError = (error: UseSSRComputationError) => {
   }
 }
 
-export const wrapErrorHandler = <T extends ServerComputationFunction | ClientComputationFunction>(useSSRComputation: SSRComputationHook<T>): SSRComputationHook<T> => {
-  return (...args: Parameters<SSRComputationHook<T>>) => {
+export const wrapErrorHandler = <TResult, T extends ServerComputationFunction<TResult> | ClientComputationFunction<TResult>>(useSSRComputation: SSRComputationHook<TResult, T>): SSRComputationHook<TResult, T> => {
+  return (...args: Parameters<SSRComputationHook<TResult, T>>): TResult | null => {
     try {
       return useSSRComputation(...args);
     } catch (error) {

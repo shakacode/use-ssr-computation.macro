@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   calculateCacheKey,
-  ClientHook,
-  Dependency,
-  isPromise,
+  Dependency, isObservable,
+  isPromise, Observable,
   Options,
   parseDependencies,
-  SSRComputationFunction,
+  SSRComputationFunction, Subscription,
 } from "./utils";
 import { wrapErrorHandler } from "./errorHandler";
-import { useAsyncResultManager } from "./useAsyncResultManager";
 import { getSSRCache } from "./ssrCache";
 import { runOnSubscriptionsResumed } from "./subscriptions";
 import { ClientComputationFunction } from "./utils";
@@ -20,88 +18,119 @@ const useSSRComputation_Client = <TResult>(
   options: Options,
   relativePathToCwd: string
 ): TResult | null => {
-  const [fn, setFn] = useState<(...dependencies: Dependency[])=>any>();
-  const fnInfo = useRef<{ fn: SSRComputationFunction<TResult>, importFn: ClientComputationFunction<TResult> } | null>(null);
+  const [, forceUpdate] = useState(0);
   const cache = getSSRCache();
   const parsedDependencies = parseDependencies(dependencies);
   const skip = !!options.skip;
-
-  const [promiseResult, setPromiseResult] = useState<TResult | null>(null);
-  const [subscriptionResult, setSubscriptionResult] = useState<TResult | null>(null);
+  const subscriptionRef = useRef<Subscription>()
+  const fnInfo = useRef<{ fn: SSRComputationFunction<TResult>, importFn: ClientComputationFunction<TResult> }>()
+  const isMountedRef = useRef(true);
 
   // relativePathToCwd is used to make sure that the cache key is unique for each module
   // and it's not affected by the file that calls it
   const cacheKey = calculateCacheKey(relativePathToCwd, parsedDependencies);
-  const cachedValue = cache?.[cacheKey]?.result;
-  const isSubscription = cache?.[cacheKey]?.isSubscription || false;
-  const isCacheHit = !!cachedValue;
+  const cachedResult = cache[cacheKey]?.result as TResult | undefined;
+  const isSubscription = cache[cacheKey]?.isSubscription;
+  const isCacheHit = cacheKey in cache;
+
+  const unsubscribe = useCallback(() => {
+    subscriptionRef.current?.unsubscribe();
+    subscriptionRef.current = undefined;
+  }, []);
 
   useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      unsubscribe();
+    }
+  }, []);
+
+  const handleResult = useCallback((returnedResult: TResult | Promise<TResult> | Observable<TResult>, isMounted: () => boolean) => {
+    unsubscribe();
+    const updateResult = (newResult: TResult) => {
+      if (!isMounted()) return;
+      if (cacheKey in cache && cache[cacheKey]?.result === newResult) return;
+      cache[cacheKey] = {
+        result: newResult,
+        isSubscription: cache[cacheKey]?.isSubscription || false,
+      };
+      forceUpdate(prevState => prevState + 1);
+    }
+
+    if (isPromise(returnedResult)) {
+      returnedResult.then(updateResult);
+    } else if (isObservable(returnedResult)) {
+      if (!isMounted()) return;
+      subscriptionRef.current = returnedResult.subscribe({ next: updateResult });
+    } else {
+      updateResult(returnedResult);
+    }
+  }, [forceUpdate, cacheKey])
+
+  useEffect(() => {
+    if (isCacheHit || fnInfo.current?.importFn === importFn) return;
     let isMounted = true;
 
-    if (isSubscription) {
-      void runOnSubscriptionsResumed(async () => {
-        if (!isMounted) return;
-        const subscribe = (await importFn()).subscribe;
-      });
-    }
+    importFn().then(module => {
+      if (!isMounted) return;
+      fnInfo.current = {
+        importFn,
+        fn: module.default,
+      };
+      handleResult(module.default(...dependencies), () => isMounted);
+    });
 
     return () => {
       isMounted = false;
-    }
-  }, [isSubscription]);
+      unsubscribe();
+    };
+  }, [isCacheHit, importFn]);
 
   useEffect(() => {
-    if ((isCacheHit && !isSubscription) || skip) return;
-
-    const getResult = (fn: SSRComputationFunction<TResult>) => {
-      const result = fn(...dependencies);
-      if (isPromise(result)) {
-        result.then(promiseResult => {
-          if (!isMounted) return;
-          setPromiseResult(promiseResult);
-        })
-      }
-    }
+    if (!isSubscription) return;
 
     let isMounted = true;
-    if (fnInfo.current?.importFn !== importFn) {
-      importFn().then((module) => {
+
+    void runOnSubscriptionsResumed(() => {
+      if (!isMounted) return;
+
+      importFn().then(module => {
         if (!isMounted) return;
         fnInfo.current = {
           importFn,
           fn: module.default,
         };
+        return module.default;
+      }).then(fn => {
+        if (!isMounted || !fn) return;
+        handleResult(fn(...dependencies), () => isMounted);
       });
-    }
-    importFn().then((module) => {
-      if (!isMounted) return;
-      // Wrapping to an empty function to avoid calling the function immediately.
-      // https://medium.com/swlh/how-to-store-a-function-with-the-usestate-hook-in-react-8a88dd4eede1
-      setFn(() => module.default);
     });
 
     return () => {
       isMounted = false;
+      unsubscribe();
     };
-  }, [isCacheHit, importFn, skip]);
+  }, [importFn, cacheKey]);
 
-  const result = useMemo(()=> {
+  const result = useMemo<null | TResult>((): TResult | null => {
     if (skip) return null;
-    if (!fn) return cachedValue || null;
+    const fn = fnInfo.current?.fn;
+    if (importFn !== fnInfo.current?.importFn || !fn || isCacheHit) return cachedResult || null;
 
-    return fn(...parsedDependencies);
-  }, [fn, cacheKey, skip]);
+    const returnedResult = fn(...dependencies);
+    handleResult(returnedResult, () => isMountedRef.current);
 
-  const currentResult = useAsyncResultManager(result, cachedValue);
+    if (isPromise(returnedResult)) {
+      return null;
+    } else if (isObservable(returnedResult)) {
+      return returnedResult.current;
+    } else {
+      return returnedResult;
+    }
+  }, [skip, cacheKey, importFn, cachedResult, isCacheHit]);
 
-  if (!skip) {
-    cache[cacheKey] = {
-      result: currentResult,
-      isSubscription,
-    };
-  }
-  return currentResult;
+  return result;
 }
 
 export default wrapErrorHandler(useSSRComputation_Client);

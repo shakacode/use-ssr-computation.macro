@@ -6,7 +6,7 @@
     "publish": "lerna publish from-package --yes",
     "changed": "lerna changed --ignore-changes '**/*.md' '**/test/*' '**/__snapshots__/*' '**/*.test.{ts,tsx,js,jsx}'",
     "version": "lerna version --no-push --ignore-changes '**/*.md' '**/test/*' '**/__snapshots__/*' '**/*.test.{ts,tsx,js,jsx}'",
-    "yalc": "cd packages/macro && yalc publish && cd ../runtime && yalc publish",
+    "yalc": "cd packages/macro && yalc publish && yalc link && cd ../runtime && yalc publish && yalc link",
     "test": "cd packages/macro && yarn test && cd ../runtime && yarn test"
   },
   "homepage": "https://github.com/Popmenu/use-ssr-computation.macro",

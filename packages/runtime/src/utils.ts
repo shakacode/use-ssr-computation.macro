@@ -57,7 +57,6 @@ export type Subscription = {
 
 export type Observer<TResult> = {
   next: (value: TResult) => void;
-  error?: (error: any) => void;
 }
 
 export type Observable<T> = {
