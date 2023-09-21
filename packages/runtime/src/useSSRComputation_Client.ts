@@ -84,7 +84,7 @@ const useSSRComputation_Client = <TResult>(
       isMounted = false;
       unsubscribe();
     };
-  }, [isCacheHit, importFn]);
+  }, [cacheKey, importFn]);
 
   useEffect(() => {
     if (!isSubscription) return;
