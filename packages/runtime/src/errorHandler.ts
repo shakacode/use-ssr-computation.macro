@@ -2,7 +2,7 @@ import {
   ClientComputationFunction,
   Dependency,
   ServerComputationFunction,
-  SSRComputationFunction,
+  SSRComputationHook,
 } from "./utils";
 
 export class InternalUseSSRComputationError extends Error {
@@ -44,8 +44,8 @@ export const handleError = (error: UseSSRComputationError) => {
   }
 }
 
-export const wrapErrorHandler = <T extends ServerComputationFunction | ClientComputationFunction>(useSSRComputation: SSRComputationFunction<T>): SSRComputationFunction<T> => {
-  return (...args: Parameters<SSRComputationFunction<T>>) => {
+export const wrapErrorHandler = <T extends ServerComputationFunction | ClientComputationFunction>(useSSRComputation: SSRComputationHook<T>): SSRComputationHook<T> => {
+  return (...args: Parameters<SSRComputationHook<T>>) => {
     try {
       return useSSRComputation(...args);
     } catch (error) {

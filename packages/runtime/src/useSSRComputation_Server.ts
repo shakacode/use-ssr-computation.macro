@@ -1,8 +1,21 @@
 import { InternalUseSSRComputationError, wrapErrorHandler } from "./errorHandler";
-import { calculateCacheKey, isObservable, isPromise, ServerFunction } from "./utils";
+import {
+  calculateCacheKey,
+  Dependency,
+  isObservable,
+  isPromise,
+  Options,
+  ServerComputationFunction,
+  ServerHook,
+} from "./utils";
 import { getSSRCache } from "./ssrCache";
 
-const useSSRComputation_Server: ServerFunction = (fn, dependencies, options, relativePathToCwd) => {
+const useSSRComputation_Server = <TResult>(
+  fn: ServerComputationFunction<TResult>,
+  dependencies: Dependency[],
+  options: Options,
+  relativePathToCwd: string,
+): TResult | null => {
   const cache = getSSRCache();
   if (options.skip) return null;
 
@@ -22,15 +35,15 @@ const useSSRComputation_Server: ServerFunction = (fn, dependencies, options, rel
         result: result.current,
         isSubscription: true,
       }
+      return result.current;
     } else {
       cache[cacheKey] = {
         result,
         isSubscription: false,
       };
     }
+    return result;
   }
-
-  return result;
 }
 
 export default wrapErrorHandler(useSSRComputation_Server);

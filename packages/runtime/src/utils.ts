@@ -37,25 +37,26 @@ export const calculateCacheKey = (modulePath: string, dependencies: Dependency[]
   return `${modulePath}::${dependenciesString}`;
 }
 
-export type ServerComputationFunction = (...dependencies: any[]) => any;
-export type ClientComputationFunction = () => Promise<{ default: (...dependencies: any[]) => any }>
+export type SSRComputationFunction<TResult> = (...dependencies: Dependency[]) => TResult | Promise<TResult> | Observable<TResult>;
+export type ServerComputationFunction<TResult> = SSRComputationFunction<TResult>;
+export type ClientComputationFunction<TResult> = () => Promise<{ default: SSRComputationFunction<TResult> }>
 
-export type SSRComputationFunction<Fn extends ServerComputationFunction | ClientComputationFunction> = (
+export type SSRComputationHook<TResult, Fn extends ServerComputationFunction<TResult> | ClientComputationFunction<TResult>> = (
   fn: Fn,
-  dependencies: any[],
-  options: any,
+  dependencies: Dependency[],
+  options: Options,
   relativePathToCwd: string
-) => any;
+) => TResult | null;
 
-export type ServerFunction = SSRComputationFunction<ServerComputationFunction>;
-export type ClientFunction = SSRComputationFunction<ClientComputationFunction>;
+export type ServerHook<TResult> = SSRComputationHook<TResult, ServerComputationFunction<TResult>>;
+export type ClientHook<TResult> = SSRComputationHook<TResult, ClientComputationFunction<TResult>>;
 
 export type Subscription = {
   unsubscribe: () => void;
 }
 
-export type Observer<T> = {
-  next: (value: T) => void;
+export type Observer<TResult> = {
+  next: (value: TResult) => void;
   error?: (error: any) => void;
 }
 
