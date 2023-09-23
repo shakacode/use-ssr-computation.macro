@@ -25,7 +25,8 @@ const useSSRComputation_Client = <TResult>(
   const subscriptionRef = useRef<Subscription>()
   const fnRef = useRef<SSRComputationFunction<TResult>>()
   const isMountedRef = useRef(true);
-  const currentCacheKeyRef = useRef(cacheKey);
+  const currentCacheKeyRef = useRef('');
+  const currentResultRef = useRef<TResult | null>(null);
 
   // relativePathToCwd is used to make sure that the cache key is unique for each module
   // and it's not affected by the file that calls it
@@ -52,7 +53,7 @@ const useSSRComputation_Client = <TResult>(
 
     const updateResult = (newResult: TResult) => {
       if (isDisposed()) return;
-      if (cacheKey in cache && cache[cacheKey]?.result === newResult) return;
+      if (currentResultRef.current === newResult) return;
       cache[cacheKey] = {
         result: newResult,
         isSubscription: cache[cacheKey]?.isSubscription || isObservable(returnedResult),
@@ -74,7 +75,7 @@ const useSSRComputation_Client = <TResult>(
     importFn().then(module => {
       if (!isMountedRef.current) return;
       fnRef.current = module.default;
-      handleResult(module.default(...dependencies));
+      handleResult(module.default(...parsedDependencies));
     });
   }, [importFn, handleResult, cacheKey]);
 
@@ -93,7 +94,7 @@ const useSSRComputation_Client = <TResult>(
     const fn = fnRef.current;
     if (!fn) return null;
 
-    return fn(...dependencies);
+    return fn(...parsedDependencies);
   }, [skip, cacheKey]);
 
   useEffect(() => {
@@ -112,10 +113,7 @@ const useSSRComputation_Client = <TResult>(
     return resultFromComputation;
   }, [resultFromComputation, resultFromCache]);
 
-  cache[cacheKey] = {
-    result,
-    isSubscription: isSubscription || isObservable(resultFromComputation),
-  };
+  currentResultRef.current = result;
   return result;
 }
 
