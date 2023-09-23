@@ -23,36 +23,39 @@ const useSSRComputation_Client = <TResult>(
   const parsedDependencies = parseDependencies(dependencies);
   const skip = !!options.skip;
   const subscriptionRef = useRef<Subscription>()
-  const fnInfo = useRef<{ fn: SSRComputationFunction<TResult>, importFn: ClientComputationFunction<TResult> }>()
+  const fnRef = useRef<SSRComputationFunction<TResult>>()
   const isMountedRef = useRef(true);
+  const currentCacheKeyRef = useRef(cacheKey);
 
   // relativePathToCwd is used to make sure that the cache key is unique for each module
   // and it's not affected by the file that calls it
   const cacheKey = calculateCacheKey(relativePathToCwd, parsedDependencies);
+  currentCacheKeyRef.current = cacheKey;
   const cachedResult = cache[cacheKey]?.result as TResult | undefined;
   const isSubscription = cache[cacheKey]?.isSubscription;
   const isCacheHit = cacheKey in cache;
 
-  const unsubscribe = useCallback(() => {
-    subscriptionRef.current?.unsubscribe();
-    subscriptionRef.current = undefined;
-  }, []);
-
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
-      unsubscribe();
+      subscriptionRef.current?.unsubscribe();
+      subscriptionRef.current = undefined;
     }
-  }, []);
+  }, [cacheKey]);
 
-  const handleResult = useCallback((returnedResult: TResult | Promise<TResult> | Observable<TResult>, isMounted: () => boolean) => {
-    unsubscribe();
+  const isDisposed = useCallback(() => {
+    return cacheKey !== currentCacheKeyRef.current || !isMountedRef.current;
+  }, [cacheKey]);
+
+  const handleResult = useCallback((returnedResult: TResult | Promise<TResult> | Observable<TResult>) => {
+    if (isDisposed()) return;
+
     const updateResult = (newResult: TResult) => {
-      if (!isMounted()) return;
+      if (isDisposed()) return;
       if (cacheKey in cache && cache[cacheKey]?.result === newResult) return;
       cache[cacheKey] = {
         result: newResult,
-        isSubscription: cache[cacheKey]?.isSubscription || false,
+        isSubscription: cache[cacheKey]?.isSubscription || isObservable(returnedResult),
       };
       forceUpdate(prevState => prevState + 1);
     }
@@ -60,76 +63,59 @@ const useSSRComputation_Client = <TResult>(
     if (isPromise(returnedResult)) {
       returnedResult.then(updateResult);
     } else if (isObservable(returnedResult)) {
-      if (!isMounted()) return;
       subscriptionRef.current = returnedResult.subscribe({ next: updateResult });
     } else {
       updateResult(returnedResult);
     }
-  }, [forceUpdate, cacheKey])
+  }, [forceUpdate, isDisposed, cacheKey]);
 
-  useEffect(() => {
-    if (isCacheHit || fnInfo.current?.importFn === importFn) return;
-    let isMounted = true;
-
+  const loadAndRun = useCallback(() => {
+    if (!isMountedRef.current) return;
     importFn().then(module => {
-      if (!isMounted) return;
-      fnInfo.current = {
-        importFn,
-        fn: module.default,
-      };
-      handleResult(module.default(...dependencies), () => isMounted);
+      if (!isMountedRef.current) return;
+      fnRef.current = module.default;
+      handleResult(module.default(...dependencies));
     });
-
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
-  }, [cacheKey, importFn]);
+  }, [importFn, handleResult, cacheKey]);
 
   useEffect(() => {
-    if (!isSubscription) return;
+    if (isCacheHit || fnRef.current) return;
+    loadAndRun();
+  }, [cacheKey, loadAndRun]);
 
-    let isMounted = true;
+  useEffect(() => {
+    if (!isSubscription || fnRef.current) return;
+    void runOnSubscriptionsResumed(loadAndRun);
+  }, [cacheKey, loadAndRun]);
 
-    void runOnSubscriptionsResumed(() => {
-      if (!isMounted) return;
-
-      importFn().then(module => {
-        if (!isMounted) return;
-        fnInfo.current = {
-          importFn,
-          fn: module.default,
-        };
-        return module.default;
-      }).then(fn => {
-        if (!isMounted || !fn) return;
-        handleResult(fn(...dependencies), () => isMounted);
-      });
-    });
-
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
-  }, [importFn, cacheKey]);
-
-  const result = useMemo<null | TResult>((): TResult | null => {
+  const resultFromComputation = useMemo(() => {
     if (skip) return null;
-    const fn = fnInfo.current?.fn;
-    if (importFn !== fnInfo.current?.importFn || !fn || isCacheHit) return cachedResult || null;
+    const fn = fnRef.current;
+    if (!fn) return null;
 
-    const returnedResult = fn(...dependencies);
-    handleResult(returnedResult, () => isMountedRef.current);
+    return fn(...dependencies);
+  }, [skip, cacheKey]);
 
-    if (isPromise(returnedResult)) {
-      return null;
-    } else if (isObservable(returnedResult)) {
-      return returnedResult.current;
-    } else {
-      return returnedResult;
-    }
-  }, [skip, cacheKey, importFn, cachedResult, isCacheHit]);
+  useEffect(() => {
+    if (!isPromise(resultFromComputation) && !isObservable(resultFromComputation)) return;
+    handleResult(resultFromComputation);
+  }, [handleResult, resultFromComputation]);
 
+  const resultFromCache = useMemo(() => {
+    if (skip) return null;
+    return cachedResult || null;
+  }, [skip, cachedResult]);
+
+  const result = useMemo(() => {
+    if (!resultFromComputation || isPromise(resultFromComputation)) return resultFromCache;
+    if (isObservable(resultFromComputation)) return resultFromComputation.current || resultFromCache;
+    return resultFromComputation;
+  }, [resultFromComputation, resultFromCache]);
+
+  cache[cacheKey] = {
+    result,
+    isSubscription: isSubscription || isObservable(resultFromComputation),
+  };
   return result;
 }
 
