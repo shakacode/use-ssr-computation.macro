@@ -104,12 +104,12 @@ const useSSRComputation_Client = <TResult>(
 
   const resultFromCache = useMemo(() => {
     if (skip) return null;
-    return cachedResult || null;
+    return cachedResult ?? null;
   }, [skip, cachedResult]);
 
   const result = useMemo(() => {
     if (!resultFromComputation || isPromise(resultFromComputation)) return resultFromCache;
-    if (isObservable(resultFromComputation)) return resultFromComputation.current || resultFromCache;
+    if (isObservable(resultFromComputation)) return resultFromComputation.current ?? resultFromCache;
     return resultFromComputation;
   }, [resultFromComputation, resultFromCache]);
 
