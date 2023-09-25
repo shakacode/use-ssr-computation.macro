@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - master
-      - abanoubghadban/sc-65675/implement-continous-deployment-on-github
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,10 +22,10 @@ jobs:
         run: |
           changed=$(yarn run --silent changed || true)
           if [ -n "$changed" ]; then
-            echo "Error: Found changed packages. Please run 'yarn run version' before pushing changes." >&2
+            echo "Error: Found changed packages. Please run 'yarn run version'. Also, make sure to push the tags wih `git push --tags origin`." >&2
             exit 1
           fi
       - name: Publish package on NPM 📦
-        run: yarn run publish --dist-tag experimental
+        run: yarn run publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
