@@ -27,11 +27,11 @@ const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult)
   let called = { current: false };
   let currentParam1: number;
   let isSubscribed = { current: false };
-  let currentValue = defaultValue;
+  let currentResult = defaultValue;
   let nextFn: ((value: TResult) => void) | undefined;
 
   const emitNewValue = (newValue: TResult) => {
-    currentValue = newValue;
+    currentResult = newValue;
     if (nextFn) {
       setTimeout(() => {
         if (nextFn) {
@@ -46,7 +46,7 @@ const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult)
       throw new Error('Observable is still subscribed');
     }
     called.current = false;
-    currentValue = defaultValue;
+    currentResult = defaultValue;
   }
 
   const ssrComputationModule: SSRComputationModule<TResult> = {
@@ -60,9 +60,9 @@ const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult)
       called.current = true;
       currentParam1 = param1;
 
-      return currentValue;
+      return currentResult;
     },
-    subscribe: (next: (result: TResult) => void, param1: number) => {
+    subscribe: (getCurrentResult, next, param1: number) => {
       if (!called.current || currentParam1 !== param1) {
         throw new Error('The computation function is not called before subscribing');
       }
@@ -72,11 +72,14 @@ const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult)
       if (isSubscribed.current) {
         throw new Error('Observable is not unsubscribed before the new call');
       }
+      if (getCurrentResult() !== currentResult) {
+        throw new Error('The current result is not the same as the last computed result');
+      }
       isSubscribed.current = true;
       nextFn = next;
 
       setTimeout(() => {
-        next(currentValue);
+        next(currentResult);
       }, 0);
 
       return {

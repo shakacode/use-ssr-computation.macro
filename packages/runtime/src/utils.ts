@@ -39,7 +39,7 @@ export const calculateCacheKey = (modulePath: string, dependencies: Dependency[]
 
 export type SSRComputationModule<TResult> = {
   compute: (...dependencies: Dependency[]) => TResult;
-  subscribe?: (next: (result: TResult) => void, ...dependencies: Dependency[]) => Subscription;
+  subscribe?: (getCurrentResult: () => TResult, next: (result: TResult) => void, ...dependencies: Dependency[]) => Subscription;
 };
 export type ServerComputationFunction<TResult> = SSRComputationModule<TResult>;
 export type ClientComputationFunction<TResult> = () => Promise<SSRComputationModule<TResult>>

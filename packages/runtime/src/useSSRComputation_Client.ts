@@ -11,7 +11,7 @@ import { getSSRCache } from "./ssrCache";
 import { runOnSubscriptionsResumed } from "./subscriptions";
 import { ClientComputationFunction } from "./utils";
 
-const NoComputationResult = Symbol('NoComputationResult');
+const NoResult = Symbol('NoResult');
 
 const useSSRComputation_Client = <TResult>(
   importFn: ClientComputationFunction<TResult>,
@@ -41,32 +41,36 @@ const useSSRComputation_Client = <TResult>(
     return skip || cacheKey !== currentCacheKeyRef.current || !isMountedRef.current;
   }, [skip, cacheKey]);
 
-  const handleSubscription = useCallback(({ useCurrentResult } : { useCurrentResult: boolean }) => {
+  const updateCache = useCallback((newResult: TResult) => {
+    cache[cacheKey] = {
+      result: newResult,
+      isSubscription: cache[cacheKey]?.isSubscription || !!moduleRef.current?.subscribe,
+    };
+  }, [cacheKey]);
+
+  const handleSubscription = useCallback(({ recomputeTheResult } : { recomputeTheResult: boolean }) => {
     if (isDisposed()) return;
 
     const updateResult = (newResult: TResult) => {
-      if (isDisposed()) return;
-      if (currentResultRef.current === newResult) return;
-      cache[cacheKey] = {
-        result: newResult,
-        isSubscription: cache[cacheKey]?.isSubscription || !!moduleRef.current?.subscribe,
-      };
-      if (currentResultRef.current !== newResult) {
-        forceUpdate(prevState => prevState + 1);
-      }
+      if (isDisposed() || currentResultRef.current === newResult) return;
+      updateCache(newResult);
+      currentResultRef.current = newResult;
+      forceUpdate(prevState => prevState + 1);
     }
 
-    if (useCurrentResult) {
+    if (recomputeTheResult) {
       const fn = moduleRef.current?.compute;
-      if (!fn) return;
-      updateResult(fn(...parsedDependencies));
+      if (fn) {
+        updateResult(fn(...parsedDependencies));
+      }
     }
-    subscriptionRef.current = moduleRef.current?.subscribe?.(updateResult, ...parsedDependencies);
-  }, [forceUpdate, isDisposed, cacheKey]);
+    const getCurrentResult = () => currentResultRef.current!;
+    subscriptionRef.current = moduleRef.current?.subscribe?.(getCurrentResult, updateResult, ...parsedDependencies);
+  }, [forceUpdate, isDisposed, cacheKey, updateCache]);
 
   useEffect(() => {
     if (moduleRef.current) {
-      handleSubscription({ useCurrentResult: false });
+      handleSubscription({ recomputeTheResult: false });
     }
 
     return () => {
@@ -81,7 +85,7 @@ const useSSRComputation_Client = <TResult>(
     importFn().then(module => {
       if (!isMountedRef.current) return;
       moduleRef.current = module;
-      handleSubscription({ useCurrentResult: true });
+      handleSubscription({ recomputeTheResult: true });
     });
   }, [importFn, handleSubscription, cacheKey]);
 
@@ -96,25 +100,27 @@ const useSSRComputation_Client = <TResult>(
   }, [cacheKey, loadAndRun, skip]);
 
   const resultFromComputation = useMemo(() => {
-    if (skip) return NoComputationResult;
+    if (skip) return NoResult;
     const fn = moduleRef.current?.compute;
-    if (!fn) return NoComputationResult;
+    if (!fn) return NoResult;
 
     return fn(...parsedDependencies);
   }, [skip, cacheKey]);
 
   const resultFromCache = useMemo(() => {
-    if (skip) return null;
-    return cachedResult ?? null;
+    if (skip) return NoResult;
+    return cachedResult ?? NoResult;
   }, [skip, cachedResult]);
 
   const result = useMemo(() => {
-    if (skip) return null;
-    if (resultFromComputation === NoComputationResult) return resultFromCache;
+    if (skip) return NoResult;
+    if (resultFromComputation === NoResult) return resultFromCache;
     return resultFromComputation;
-  }, [resultFromComputation, resultFromCache]);
+  }, [resultFromComputation, resultFromCache, skip]);
 
+  if (result === NoResult) return null;
   currentResultRef.current = result;
+  updateCache(result);
   return result;
 }
 
