@@ -4,63 +4,38 @@ import {
   calculateCacheKey,
   ClientComputationFunction,
   Dependency,
-  Observable,
-  Observer,
-  SSRComputationFunction,
+  SSRComputationModule,
 } from "./utils";
 import { getSSRCache, setSSRCache } from "./ssrCache";
 import { fetchSubscriptions, stopFetchingSubscriptionsForTesting } from "./subscriptions";
 
 type MemoryLeakGuardedComputationFunction<TResult> = {
   called: { current: boolean },
-  ssrComputationFunction: SSRComputationFunction<TResult>,
+  ssrComputationModule: SSRComputationModule<TResult>,
   emitNewValue: (value: TResult) => void,
   checkUnmounted: () => void,
   isSubscribed: { current: boolean },
 }
 
-type TestUtils<TResult> = Omit<MemoryLeakGuardedComputationFunction<TResult>, 'ssrComputationFunction'> &
+type TestUtils<TResult> = Omit<MemoryLeakGuardedComputationFunction<TResult>, 'ssrComputationModule'> &
   ReturnType<typeof renderHook<unknown, TResult | null>> & {
     expectNoRerender: () => Promise<void>,
     computationLoaded: { current: boolean },
   }
 
-const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult | null): MemoryLeakGuardedComputationFunction<TResult> => {
+const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult): MemoryLeakGuardedComputationFunction<TResult> => {
   let called = { current: false };
   let currentParam1: number;
   let isSubscribed = { current: false };
-  let subscriptionObserver: Observer<TResult> | undefined;
   let currentValue = defaultValue;
-
-  const observable: Observable<TResult> = {
-    current: currentValue,
-    subscribe: (observer) => {
-      isSubscribed.current = true;
-      if (currentValue != null) {
-        setTimeout(() => {
-          if (currentValue === null) return;
-          observer.next(currentValue);
-        }, 0);
-      }
-      subscriptionObserver = observer;
-
-      return {
-        unsubscribe: () => {
-          isSubscribed.current = false;
-          subscriptionObserver = undefined;
-        }
-      }
-    }
-  }
+  let nextFn: ((value: TResult) => void) | undefined;
 
   const emitNewValue = (newValue: TResult) => {
-    observable.current = newValue;
-    if (!subscriptionObserver) {
-      currentValue = newValue;
-    } else {
+    currentValue = newValue;
+    if (nextFn) {
       setTimeout(() => {
-        if (subscriptionObserver) {
-          subscriptionObserver.next(newValue);
+        if (nextFn) {
+          nextFn(newValue);
         }
       }, 0);
     }
@@ -74,38 +49,63 @@ const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult 
     currentValue = defaultValue;
   }
 
-  const ssrComputationFunction = (param1: number): Observable<TResult> => {
-    if (called.current && currentParam1 === param1) {
-      throw new Error('Redundant call to the computation function with the same parameters');
-    }
-    if (isSubscribed.current) {
-      throw new Error('Observable is not unsubscribed before the new call');
-    }
-    called.current = true;
+  const ssrComputationModule: SSRComputationModule<TResult> = {
+    compute: (param1: number) => {
+      if (called.current && currentParam1 === param1) {
+        throw new Error('Redundant call to the computation function with the same parameters');
+      }
+      if (isSubscribed.current) {
+        throw new Error('The subscription is not unsubscribed before the new call');
+      }
+      called.current = true;
+      currentParam1 = param1;
 
-    return observable;
-  };
+      return currentValue;
+    },
+    subscribe: (next: (result: TResult) => void, param1: number) => {
+      if (!called.current || currentParam1 !== param1) {
+        throw new Error('The computation function is not called before subscribing');
+      }
+      if (isSubscribed.current && currentParam1 === param1) {
+        throw new Error('Redundant call to the subscription function with the same parameters');
+      }
+      if (isSubscribed.current) {
+        throw new Error('Observable is not unsubscribed before the new call');
+      }
+      isSubscribed.current = true;
+      nextFn = next;
+
+      setTimeout(() => {
+        next(currentValue);
+      }, 0);
+
+      return {
+        unsubscribe: () => {
+          isSubscribed.current = false;
+          nextFn = undefined;
+        }
+      }
+    },
+  } as SSRComputationModule<TResult>;
 
   return {
     called,
-    ssrComputationFunction: ssrComputationFunction as SSRComputationFunction<TResult>,
+    ssrComputationModule: ssrComputationModule as SSRComputationModule<TResult>,
     emitNewValue,
     checkUnmounted,
     isSubscribed,
   }
 }
 
-const createImportFn = <TResult>(ssrComputationFunction: SSRComputationFunction<TResult>): {
+const createImportFn = <TResult>(ssrComputationModule: SSRComputationModule<TResult>): {
   importFn: ClientComputationFunction<TResult>,
   computationLoaded: { current: boolean },
 } => {
   const computationLoaded = { current: false };
   const importFn = () => {
     computationLoaded.current = true;
-    return new Promise<{ default: SSRComputationFunction<TResult> }>(resolve => resolve({
-      default: ssrComputationFunction,
-    }))
-  }
+    return new Promise<SSRComputationModule<TResult>>(resolve => resolve(ssrComputationModule));
+  };
 
   return { computationLoaded, importFn };
 };
@@ -123,9 +123,9 @@ const runBaseMemoryLeakTest = async <TResult>(
   { alreadyCached, cachedValue }: { alreadyCached?: boolean, cachedValue?: TResult },
   test: ((testUtils: TestUtils<TResult>) => Promise<void>) | null = null,
 ) => {
-  const { ssrComputationFunction, ...ssrComputationFunctionUtils } = getMemoryLeakGuardedComputationFunction(defaultValue);
+  const { ssrComputationModule, ...ssrComputationFunctionUtils } = getMemoryLeakGuardedComputationFunction(defaultValue);
   const { checkUnmounted } = ssrComputationFunctionUtils;
-  const { importFn, computationLoaded } = createImportFn(ssrComputationFunction);
+  const { importFn, computationLoaded } = createImportFn(ssrComputationModule);
 
   const hookUtils = renderHook(() => useSSRComputation_Client(importFn, dependencies, {}, relativePathToCwd));
   const {

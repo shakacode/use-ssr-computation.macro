@@ -1,16 +1,14 @@
-import { InternalUseSSRComputationError, wrapErrorHandler } from "./errorHandler";
+import { wrapErrorHandler } from "./errorHandler";
 import {
   calculateCacheKey,
   Dependency,
-  isObservable,
-  isPromise,
   Options,
   ServerComputationFunction,
 } from "./utils";
 import { getSSRCache } from "./ssrCache";
 
 const useSSRComputation_Server = <TResult>(
-  fn: ServerComputationFunction<TResult>,
+  computationModule: ServerComputationFunction<TResult>,
   dependencies: Dependency[],
   options: Options,
   relativePathToCwd: string,
@@ -18,28 +16,14 @@ const useSSRComputation_Server = <TResult>(
   const cache = getSSRCache();
   if (options.skip) return null;
 
-  const result = fn(...dependencies);
+  const result = computationModule.compute(...dependencies);
   // relativePathToCwd is used to make sure that the cache key is unique for each module
   // and it's not affected by the file that calls it
   const cacheKey = calculateCacheKey(relativePathToCwd, dependencies);
-  // check if result is a promise
-  if (isPromise(result)) {
-    throw new InternalUseSSRComputationError(
-      'useSSRComputation does not support async functions on the server side',
-      result,
-    );
-  } else if (isObservable(result)) {
-    cache[cacheKey] = {
-      result: result.current,
-      isSubscription: true,
-    }
-    return result.current;
-  } else {
-    cache[cacheKey] = {
-      result,
-      isSubscription: false,
-    };
-  }
+  cache[cacheKey] = {
+    result,
+    isSubscription: !!computationModule.subscribe,
+  };
   return result;
 }
 

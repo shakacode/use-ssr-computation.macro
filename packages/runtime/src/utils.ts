@@ -37,9 +37,12 @@ export const calculateCacheKey = (modulePath: string, dependencies: Dependency[]
   return `${modulePath}::${dependenciesString}`;
 }
 
-export type SSRComputationFunction<TResult> = (...dependencies: Dependency[]) => TResult | Promise<TResult> | Observable<TResult>;
-export type ServerComputationFunction<TResult> = SSRComputationFunction<TResult>;
-export type ClientComputationFunction<TResult> = () => Promise<{ default: SSRComputationFunction<TResult> }>
+export type SSRComputationModule<TResult> = {
+  compute: (...dependencies: Dependency[]) => TResult;
+  subscribe?: (next: (result: TResult) => void, ...dependencies: Dependency[]) => Subscription;
+};
+export type ServerComputationFunction<TResult> = SSRComputationModule<TResult>;
+export type ClientComputationFunction<TResult> = () => Promise<SSRComputationModule<TResult>>
 
 export type SSRComputationHook<TResult, Fn extends ServerComputationFunction<TResult> | ClientComputationFunction<TResult>> = (
   fn: Fn,
@@ -63,11 +66,3 @@ export type Observable<T> = {
   current: T | null;
   subscribe: (observer: Observer<T>) => Subscription;
 }
-
-export const isObservable = <T>(obj: any): obj is Observable<T> => {
-  return obj && typeof obj.subscribe === "function" && "current" in obj;
-};
-
-export const isPromise = <T>(obj: any): obj is Promise<T> => {
-  return obj && typeof obj.then === "function";
-};
