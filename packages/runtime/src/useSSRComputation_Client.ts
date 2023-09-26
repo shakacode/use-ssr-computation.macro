@@ -38,8 +38,8 @@ const useSSRComputation_Client = <TResult>(
   const isCacheHit = cacheKey in cache;
 
   const isDisposed = useCallback(() => {
-    return cacheKey !== currentCacheKeyRef.current || !isMountedRef.current;
-  }, [cacheKey]);
+    return skip || cacheKey !== currentCacheKeyRef.current || !isMountedRef.current;
+  }, [skip, cacheKey]);
 
   const handleSubscription = useCallback(({ useCurrentResult } : { useCurrentResult: boolean }) => {
     if (isDisposed()) return;
@@ -77,7 +77,7 @@ const useSSRComputation_Client = <TResult>(
   }, [cacheKey, handleSubscription]);
 
   const loadAndRun = useCallback(() => {
-    if (!isMountedRef.current) return;
+    if (!isMountedRef.current || skip) return;
     importFn().then(module => {
       if (!isMountedRef.current) return;
       moduleRef.current = module;
@@ -86,14 +86,14 @@ const useSSRComputation_Client = <TResult>(
   }, [importFn, handleSubscription, cacheKey]);
 
   useEffect(() => {
-    if (isCacheHit || moduleRef.current) return;
+    if (isCacheHit || moduleRef.current || skip) return;
     loadAndRun();
-  }, [cacheKey, loadAndRun]);
+  }, [cacheKey, loadAndRun, skip]);
 
   useEffect(() => {
-    if (!isStoredAsSubscriptionInCache || moduleRef.current) return;
+    if (!isStoredAsSubscriptionInCache || moduleRef.current || skip) return;
     void runOnSubscriptionsResumed(loadAndRun);
-  }, [cacheKey, loadAndRun]);
+  }, [cacheKey, loadAndRun, skip]);
 
   const resultFromComputation = useMemo(() => {
     if (skip) return NoComputationResult;
