@@ -1,17 +1,75 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   calculateCacheKey,
+  ClientComputationFunction,
   Dependency,
   Options,
   parseDependencies,
-  SSRComputationModule, Subscription,
+  SSRComputationModule,
+  Subscription,
 } from "./utils";
 import { wrapErrorHandler } from "./errorHandler";
 import { getSSRCache } from "./ssrCache";
 import { runOnSubscriptionsResumed } from "./subscriptions";
-import { ClientComputationFunction } from "./utils";
 
 const NoResult = Symbol('NoResult');
+
+type ClientState<TResult> = {
+  module?: SSRComputationModule<TResult>,
+  currentResult: TResult | null,
+  importFn: ClientComputationFunction<TResult>,
+  currentExecutor?: ComputationExecutor<TResult>,
+};
+
+class ComputationExecutor<TResult> {
+  isDisposed = false;
+  subscription: Subscription | undefined;
+
+  constructor(
+    private readonly dependencies: Dependency[],
+    private readonly updateResult: (TResult) => void,
+    private readonly state: ClientState<TResult>,
+  ) {}
+
+  handleSubscriptionIfModuleLoaded = ({ recomputeTheResult }: { recomputeTheResult: boolean }) => {
+    if (this.isDisposed || !this.state.module) return;
+
+    const updateResult = (newResult: TResult) => {
+      if (this.isDisposed || this.state.currentResult === newResult) return;
+      this.updateResult(newResult);
+    }
+
+    if (recomputeTheResult) {
+      const fn = this.state.module?.compute;
+      if (fn) {
+        updateResult(fn(...this.dependencies));
+      }
+    }
+    const getCurrentResult = () => this.state.currentResult!;
+    this.subscription = this.state.module?.subscribe?.(getCurrentResult, updateResult, ...this.dependencies);
+  }
+
+  getResultIfModuleLoaded = () => {
+    const fn = this.state.module?.compute;
+    return fn ? fn(...this.dependencies) : NoResult;
+  }
+
+  loadAndRun = () => {
+    if (this.isDisposed) return;
+    this.state.importFn().then(module => {
+      if (this.isDisposed) return;
+      if (!module.compute) throw new Error('The SSR Computation module must have a compute function');
+      this.state.module = module;
+      this.handleSubscriptionIfModuleLoaded({ recomputeTheResult: true });
+    });
+  }
+
+  dispose = () => {
+    this.isDisposed = true;
+    this.subscription?.unsubscribe();
+    this.subscription = undefined;
+  }
+}
 
 const useSSRComputation_Client = <TResult>(
   importFn: ClientComputationFunction<TResult>,
@@ -20,107 +78,66 @@ const useSSRComputation_Client = <TResult>(
   relativePathToCwd: string
 ): TResult | null => {
   const [, forceUpdate] = useState(0);
+  const clientState = useRef<ClientState<TResult>>({
+    importFn,
+    currentResult: null,
+  });
+
   const cache = getSSRCache();
   const parsedDependencies = parseDependencies(dependencies);
   const skip = !!options.skip;
-  const subscriptionRef = useRef<Subscription>()
-  const moduleRef = useRef<SSRComputationModule<TResult>>()
-  const isMountedRef = useRef(true);
-  const currentCacheKeyRef = useRef('');
-  const currentResultRef = useRef<TResult | null>(null);
-
   // relativePathToCwd is used to make sure that the cache key is unique for each module
   // and it's not affected by the file that calls it
   const cacheKey = calculateCacheKey(relativePathToCwd, parsedDependencies);
-  currentCacheKeyRef.current = cacheKey;
-  const cachedResult = cache[cacheKey]?.result as TResult | undefined;
-  const isStoredAsSubscriptionInCache = cache[cacheKey]?.isSubscription;
-  const isCacheHit = cacheKey in cache;
 
-  const isDisposed = useCallback(() => {
-    return skip || cacheKey !== currentCacheKeyRef.current || !isMountedRef.current;
-  }, [skip, cacheKey]);
-
-  const updateCache = useCallback((newResult: TResult) => {
+  const updateResult = useCallback((newResult: TResult, rerender: boolean) => {
     cache[cacheKey] = {
       result: newResult,
-      isSubscription: cache[cacheKey]?.isSubscription || !!moduleRef.current?.subscribe,
-    };
-  }, [cacheKey]);
-
-  const handleSubscription = useCallback(({ recomputeTheResult } : { recomputeTheResult: boolean }) => {
-    if (isDisposed()) return;
-
-    const updateResult = (newResult: TResult) => {
-      if (isDisposed() || currentResultRef.current === newResult) return;
-      updateCache(newResult);
-      currentResultRef.current = newResult;
+      isSubscription: cache[cacheKey]?.isSubscription || !!clientState.current?.module?.subscribe,
+    }
+    if (rerender) {
       forceUpdate(prevState => prevState + 1);
     }
+  }, [cacheKey]);
 
-    if (recomputeTheResult) {
-      const fn = moduleRef.current?.compute;
-      if (fn) {
-        updateResult(fn(...parsedDependencies));
-      }
+  const executor = useMemo(() => {
+    clientState.current.currentExecutor?.dispose();
+    clientState.current.currentExecutor = undefined;
+
+    if (skip) return null;
+    const updateResultAndRerender = (newResult: TResult) => updateResult(newResult, true);
+    clientState.current.currentExecutor = new ComputationExecutor(parsedDependencies, updateResultAndRerender, clientState.current);
+
+    const computedResult = clientState.current.currentExecutor.getResultIfModuleLoaded();
+    if (computedResult !== NoResult) {
+      updateResult(computedResult, false);
     }
-    const getCurrentResult = () => currentResultRef.current!;
-    subscriptionRef.current = moduleRef.current?.subscribe?.(getCurrentResult, updateResult, ...parsedDependencies);
-  }, [forceUpdate, isDisposed, cacheKey, updateCache]);
+    return clientState.current.currentExecutor;
+  }, [skip, cacheKey, updateResult]);
 
   useEffect(() => {
-    if (moduleRef.current) {
-      handleSubscription({ recomputeTheResult: false });
-    }
+    executor?.handleSubscriptionIfModuleLoaded({ recomputeTheResult: false });
 
     return () => {
-      isMountedRef.current = false;
-      subscriptionRef.current?.unsubscribe();
-      subscriptionRef.current = undefined;
+      executor?.dispose();
     }
-  }, [cacheKey, handleSubscription]);
+  }, [executor]);
 
-  const loadAndRun = useCallback(() => {
-    if (!isMountedRef.current || skip) return;
-    importFn().then(module => {
-      if (!isMountedRef.current) return;
-      moduleRef.current = module;
-      handleSubscription({ recomputeTheResult: true });
-    });
-  }, [importFn, handleSubscription, cacheKey]);
+  const isCacheHit = cacheKey in cache;
+  const cachedResult = isCacheHit ? cache[cacheKey]?.result as TResult : NoResult;
+  const isStoredAsSubscriptionInCache = cache[cacheKey]?.isSubscription;
 
   useEffect(() => {
-    if (isCacheHit || moduleRef.current || skip) return;
-    loadAndRun();
-  }, [cacheKey, loadAndRun, skip]);
+    if (clientState.current?.module || !executor) return;
+    if (!isCacheHit) {
+      executor.loadAndRun();
+    } else if (isStoredAsSubscriptionInCache) {
+      void runOnSubscriptionsResumed(executor.loadAndRun);
+    }
+  }, [isCacheHit, isStoredAsSubscriptionInCache, executor]);
 
-  useEffect(() => {
-    if (!isStoredAsSubscriptionInCache || moduleRef.current || skip) return;
-    void runOnSubscriptionsResumed(loadAndRun);
-  }, [cacheKey, loadAndRun, skip]);
-
-  const resultFromComputation = useMemo(() => {
-    if (skip) return NoResult;
-    const fn = moduleRef.current?.compute;
-    if (!fn) return NoResult;
-
-    return fn(...parsedDependencies);
-  }, [skip, cacheKey]);
-
-  const resultFromCache = useMemo(() => {
-    if (skip) return NoResult;
-    return cachedResult ?? NoResult;
-  }, [skip, cachedResult]);
-
-  const result = useMemo(() => {
-    if (skip) return NoResult;
-    if (resultFromComputation === NoResult) return resultFromCache;
-    return resultFromComputation;
-  }, [resultFromComputation, resultFromCache, skip]);
-
-  if (result === NoResult) return null;
-  currentResultRef.current = result;
-  updateCache(result);
+  const result = cachedResult === NoResult ? null : cachedResult;
+  clientState.current.currentResult = result;
   return result;
 }
 

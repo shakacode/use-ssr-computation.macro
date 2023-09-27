@@ -8,6 +8,7 @@ import {
 } from "./utils";
 import { getSSRCache, setSSRCache } from "./ssrCache";
 import { fetchSubscriptions, stopFetchingSubscriptionsForTesting } from "./subscriptions";
+import { setErrorHandler } from "./errorHandler";
 
 type MemoryLeakGuardedComputationFunction<TResult> = {
   called: { current: boolean },
@@ -18,10 +19,15 @@ type MemoryLeakGuardedComputationFunction<TResult> = {
 }
 
 type TestUtils<TResult> = Omit<MemoryLeakGuardedComputationFunction<TResult>, 'ssrComputationModule'> &
-  ReturnType<typeof renderHook<unknown, TResult | null>> & {
+  Omit<ReturnType<typeof renderHook<unknown, TResult | null>>, 'rerender'> & {
     expectNoRerender: () => Promise<void>,
     computationLoaded: { current: boolean },
+    rerender: (newValue?: number) => void,
   }
+
+setErrorHandler((error) => {
+  throw error;
+});
 
 const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult): MemoryLeakGuardedComputationFunction<TResult> => {
   let called = { current: false };
@@ -130,7 +136,10 @@ const runBaseMemoryLeakTest = async <TResult>(
   const { checkUnmounted } = ssrComputationFunctionUtils;
   const { importFn, computationLoaded } = createImportFn(ssrComputationModule);
 
-  const hookUtils = renderHook(() => useSSRComputation_Client(importFn, dependencies, {}, relativePathToCwd));
+  const hookUtils = renderHook(
+    ({ dependencies }) => useSSRComputation_Client(importFn, dependencies, {}, relativePathToCwd),
+    { initialProps: { dependencies } },
+  );
   const {
     result,
     unmount,
@@ -145,12 +154,17 @@ const runBaseMemoryLeakTest = async <TResult>(
     expect(result.current).toBe(defaultValue);
   }
 
+  const rerender = (newValue: number | undefined = undefined) => {
+    hookUtils.rerender({ dependencies: newValue !== undefined ? [newValue] : dependencies });
+  }
+
   if (test) {
     await test({
       expectNoRerender,
       computationLoaded,
       ...ssrComputationFunctionUtils,
       ...hookUtils,
+      rerender,
     });
   }
 
@@ -173,7 +187,7 @@ test('useSSRComputation_Client should load the subscription function and return 
   await runBaseMemoryLeakTest(0, {});
 });
 
-test("useSSRComputation_Client doesn't rerender if the subscription didn't emit any values", async () => {
+test("useSSRComputation_Client doesn't rerender if the subscription didn't emit any values and the compute returns null", async () => {
   await runBaseMemoryLeakTest(null, {});
 });
 
@@ -277,5 +291,27 @@ test('useSSRComputation_Client should fetch subscriptions after calling "fetchSu
       await waitForNextUpdate();
       expect(result.current).toBe(20);
     });
+  });
+});
+
+test('useSSRComputation_Client should update the results on dependencies change in one render cycle', async () => {
+  await runBaseMemoryLeakTest(5, {}, async (testUtils) => {
+    const { rerender, waitForNextUpdate, result, emitNewValue, expectNoRerender } = testUtils;
+    emitNewValue(10);
+    await waitForNextUpdate();
+    expect(result.current).toBe(10);
+    await expectNoRerender();
+
+    emitNewValue(15);
+    rerender();
+    expect(result.current).toBe(10);
+
+    rerender(50);
+    expect(result.current).toBe(15);
+
+    emitNewValue(20);
+    await waitForNextUpdate();
+    expect(result.current).toBe(20);
+    await expectNoRerender();
   });
 });
