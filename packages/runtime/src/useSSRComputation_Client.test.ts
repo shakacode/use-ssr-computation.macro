@@ -29,11 +29,12 @@ setErrorHandler((error) => {
   throw error;
 });
 
-const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult): MemoryLeakGuardedComputationFunction<TResult> => {
+const NoResult = Symbol('NoResult');
+const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult, mapParamToResult: (number) => TResult): MemoryLeakGuardedComputationFunction<TResult> => {
   let called = { current: false };
   let currentParam1: number;
   let isSubscribed = { current: false };
-  let currentResult = defaultValue;
+  let currentResult: typeof NoResult | TResult = NoResult;
   let nextFn: ((value: TResult) => void) | undefined;
 
   const emitNewValue = (newValue: TResult) => {
@@ -66,7 +67,7 @@ const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult)
       called.current = true;
       currentParam1 = param1;
 
-      return currentResult;
+      return currentResult === NoResult ? mapParamToResult(param1) : currentResult;
     },
     subscribe: (getCurrentResult, next, param1: number) => {
       if (!called.current || currentParam1 !== param1) {
@@ -85,7 +86,7 @@ const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult)
       nextFn = next;
 
       setTimeout(() => {
-        next(currentResult);
+        next(currentResult === NoResult ? mapParamToResult(param1) : currentResult);
       }, 0);
 
       return {
@@ -131,8 +132,9 @@ const runBaseMemoryLeakTest = async <TResult>(
   defaultValue: TResult | null,
   { alreadyCached, cachedValue }: { alreadyCached?: boolean, cachedValue?: TResult },
   test: ((testUtils: TestUtils<TResult>) => Promise<void>) | null = null,
+  mapParamToResult: (number) => TResult,
 ) => {
-  const { ssrComputationModule, ...ssrComputationFunctionUtils } = getMemoryLeakGuardedComputationFunction(defaultValue);
+  const { ssrComputationModule, ...ssrComputationFunctionUtils } = getMemoryLeakGuardedComputationFunction(defaultValue, mapParamToResult);
   const { checkUnmounted } = ssrComputationFunctionUtils;
   const { importFn, computationLoaded } = createImportFn(ssrComputationModule);
 
@@ -151,7 +153,7 @@ const runBaseMemoryLeakTest = async <TResult>(
 
   if (defaultValue != null && !alreadyCached) {
     await waitForNextUpdate();
-    expect(result.current).toBe(defaultValue);
+    expect(result.current).toBe(mapParamToResult(dependencies[0]));
   }
 
   const rerender = (newValue: number | undefined = undefined) => {
@@ -175,6 +177,15 @@ const runBaseMemoryLeakTest = async <TResult>(
   checkUnmounted();
 }
 
+const runBaseMemoryLeakTestWithNumber = async (
+  defaultValue: number | null,
+  { alreadyCached, cachedValue }: { alreadyCached?: boolean, cachedValue?: number },
+  test: ((testUtils: TestUtils<number>) => Promise<void>) | null = null,
+)=> {
+  const mapParamToResult = (param1: number) => param1 * 2;
+  await runBaseMemoryLeakTest(defaultValue, { alreadyCached, cachedValue }, test, mapParamToResult);
+}
+
 const cacheValue = <TResult>(value: TResult, isSubscription: boolean) => {
   const cacheKey = calculateCacheKey(relativePathToCwd, dependencies);
   getSSRCache()[cacheKey] = {
@@ -184,15 +195,15 @@ const cacheValue = <TResult>(value: TResult, isSubscription: boolean) => {
 }
 
 test('useSSRComputation_Client should load the subscription function and return the next result in one render cycle', async () => {
-  await runBaseMemoryLeakTest(0, {});
+  await runBaseMemoryLeakTestWithNumber(0, {});
 });
 
 test("useSSRComputation_Client doesn't rerender if the subscription didn't emit any values and the compute returns null", async () => {
-  await runBaseMemoryLeakTest(null, {});
+  await runBaseMemoryLeakTestWithNumber(null, {});
 });
 
 test('useSSRComputation_Client updates the subscription result in one render cycle', async () => {
-  await runBaseMemoryLeakTest(0, {}, async (testUtils) => {
+  await runBaseMemoryLeakTestWithNumber(0, {}, async (testUtils) => {
     const { waitForNextUpdate, emitNewValue, result } = testUtils;
     emitNewValue(4);
     await waitForNextUpdate();
@@ -201,14 +212,14 @@ test('useSSRComputation_Client updates the subscription result in one render cyc
 });
 
 test("useSSRComputation_Client returns the cached value at the first call", async () => {
-  await runBaseMemoryLeakTest(5, {});
-  await runBaseMemoryLeakTest(5, { alreadyCached: true, cachedValue: 5 });
+  await runBaseMemoryLeakTestWithNumber(5, {});
+  await runBaseMemoryLeakTestWithNumber(5, { alreadyCached: true, cachedValue: 5 });
 });
 
 test("useSSRComputation_Client only subscribe to subscriptions after calling 'fetchSubscriptions'", async () => {
-  await runBaseMemoryLeakTest(5, {});
+  await runBaseMemoryLeakTestWithNumber(5, {});
 
-  await runBaseMemoryLeakTest(20, { alreadyCached: true, cachedValue: 5 }, async (testUtils) => {
+  await runBaseMemoryLeakTestWithNumber(20, { alreadyCached: true, cachedValue: 5 }, async (testUtils) => {
     const { emitNewValue, expectNoRerender, waitForNextUpdate, result, isSubscribed } = testUtils;
 
     // Observables will not be subscribed until calling fetchSubscriptions()
@@ -228,7 +239,7 @@ test("useSSRComputation_Client only subscribe to subscriptions after calling 'fe
 [false, true].forEach((isSubscription) => {
   test(`useSSRComputation_Client should not load the computation if the ${isSubscription ? 'subscription' : 'result'} is cached`, async () => {
     cacheValue(5, isSubscription);
-    await runBaseMemoryLeakTest(5, { alreadyCached: true, cachedValue: 5 }, async (testUtils) => {
+    await runBaseMemoryLeakTestWithNumber(5, { alreadyCached: true, cachedValue: 5 }, async (testUtils) => {
       const { rerender, expectNoRerender, computationLoaded, called } = testUtils;
       expect(computationLoaded.current).toBe(false);
       expect(called.current).toBe(false);
@@ -243,7 +254,7 @@ test("useSSRComputation_Client only subscribe to subscriptions after calling 'fe
 
 test('useSSRComputation_Client should fetch subscriptions after calling "fetchSubscriptions" even if it is cached', async () => {
   cacheValue(5, true);
-  await runBaseMemoryLeakTest(5, { alreadyCached: true, cachedValue: 5 }, async (testUtils) => {
+  await runBaseMemoryLeakTestWithNumber(5, { alreadyCached: true, cachedValue: 5 }, async (testUtils) => {
     const { rerender, waitForNextUpdate, result, emitNewValue, expectNoRerender } = testUtils;
     fetchSubscriptions();
     await expectNoRerender();
@@ -262,13 +273,13 @@ test('useSSRComputation_Client should fetch subscriptions after calling "fetchSu
   test('useSSRComputation_Client should resubscribe if it is unmounted and mounted again', async () => {
     if (isSSRCached) {
       cacheValue(10, true);
-      await runBaseMemoryLeakTest(/*currentValue:*/15, { alreadyCached: true, cachedValue: 10 }, async (testUtils) => {
+      await runBaseMemoryLeakTestWithNumber(/*currentValue:*/15, { alreadyCached: true, cachedValue: 10 }, async (testUtils) => {
         const { emitNewValue, expectNoRerender } = testUtils;
         emitNewValue(20);
         await expectNoRerender();
       });
     } else {
-      await runBaseMemoryLeakTest(/*currentValue:*/5, {}, async (testUtils) => {
+      await runBaseMemoryLeakTestWithNumber(/*currentValue:*/5, {}, async (testUtils) => {
         const { waitForNextUpdate, emitNewValue, result } = testUtils;
         emitNewValue(10);
         await waitForNextUpdate();
@@ -280,7 +291,7 @@ test('useSSRComputation_Client should fetch subscriptions after calling "fetchSu
     // it will return the latest cached value "10" instead of the current value "15".
     // The function will be loaded and run again after calling "fetchSubscriptions"
     // TODO: the functions loaded can be cached as well to avoid loading them again
-    await runBaseMemoryLeakTest(15, { alreadyCached: true, cachedValue: 10 }, async (testUtils) => {
+    await runBaseMemoryLeakTestWithNumber(15, { alreadyCached: true, cachedValue: 10 }, async (testUtils) => {
       const { waitForNextUpdate, emitNewValue, result, expectNoRerender } = testUtils;
       await expectNoRerender();
 
@@ -295,7 +306,7 @@ test('useSSRComputation_Client should fetch subscriptions after calling "fetchSu
 });
 
 test('useSSRComputation_Client should update the results on dependencies change in one render cycle', async () => {
-  await runBaseMemoryLeakTest(5, {}, async (testUtils) => {
+  await runBaseMemoryLeakTestWithNumber(5, {}, async (testUtils) => {
     const { rerender, waitForNextUpdate, result, emitNewValue, expectNoRerender } = testUtils;
     emitNewValue(10);
     await waitForNextUpdate();
