@@ -7,7 +7,7 @@ import {
   SSRComputationModule,
 } from "./utils";
 import { getSSRCache, setSSRCache } from "./ssrCache";
-import { fetchSubscriptions, stopFetchingSubscriptionsForTesting } from "./subscriptions";
+import { fetchSubscriptions, resetFetchingSubscriptionsForTesting } from "./subscriptions";
 import { setErrorHandler } from "./errorHandler";
 
 type MemoryLeakGuardedComputationFunction<TResult> = {
@@ -121,7 +121,7 @@ const createImportFn = <TResult>(ssrComputationModule: SSRComputationModule<TRes
 
 beforeEach(() => {
   setSSRCache({});
-  stopFetchingSubscriptionsForTesting();
+  resetFetchingSubscriptionsForTesting();
 });
 
 const relativePathToCwd = 'example/example.js';
