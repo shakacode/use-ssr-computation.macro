@@ -65,6 +65,7 @@ class ComputationExecutor<TResult> {
   }
 
   dispose = () => {
+    if (this.isDisposed) return;
     this.isDisposed = true;
     this.subscription?.unsubscribe();
     this.subscription = undefined;
@@ -95,6 +96,7 @@ const useSSRComputation_Client = <TResult>(
       result: newResult,
       isSubscription: cache[cacheKey]?.isSubscription || !!clientState.current?.module?.subscribe,
     }
+    clientState.current.currentResult = newResult;
     if (rerender) {
       forceUpdate(prevState => prevState + 1);
     }
@@ -116,6 +118,8 @@ const useSSRComputation_Client = <TResult>(
   }, [skip, cacheKey, updateResult]);
 
   useEffect(() => {
+    // If the module is loaded, the current is result is calculated at the same render.
+    // And here we need to subscribe to the module if it has a subscribe function.
     executor?.handleSubscriptionIfModuleLoaded({ recomputeTheResult: false });
 
     return () => {
@@ -128,6 +132,8 @@ const useSSRComputation_Client = <TResult>(
   const isStoredAsSubscriptionInCache = cache[cacheKey]?.isSubscription;
 
   useEffect(() => {
+    // It loads the module and run it if there is a cache miss.
+    // If the module supports subscriptions, it will be loaded only when subscriptions are resumed.
     if (clientState.current?.module || !executor) return;
     if (!isCacheHit) {
       executor.loadAndRun();
