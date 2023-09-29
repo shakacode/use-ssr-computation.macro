@@ -125,7 +125,7 @@ beforeEach(() => {
 });
 
 const relativePathToCwd = 'example/example.js';
-const dependencies: Dependency[] = [1];
+const defaultDependencies: Dependency[] = [1];
 
 const runBaseMemoryLeakTest = async <TResult>(
   defaultValue: TResult | null,
@@ -138,7 +138,7 @@ const runBaseMemoryLeakTest = async <TResult>(
 
   const hookUtils = renderHook(
     ({ dependencies }) => useSSRComputation_Client(importFn, dependencies, {}, relativePathToCwd),
-    { initialProps: { dependencies } },
+    { initialProps: { dependencies: defaultDependencies } },
   );
   const {
     result,
@@ -155,7 +155,7 @@ const runBaseMemoryLeakTest = async <TResult>(
   }
 
   const rerender = (newValue: number | undefined = undefined) => {
-    hookUtils.rerender({ dependencies: newValue !== undefined ? [newValue] : dependencies });
+    hookUtils.rerender({ dependencies: newValue !== undefined ? [newValue] : defaultDependencies });
   }
 
   if (test) {
@@ -175,7 +175,7 @@ const runBaseMemoryLeakTest = async <TResult>(
   checkUnmounted();
 }
 
-const cacheValue = <TResult>(value: TResult, isSubscription: boolean) => {
+const cacheValue = <TResult>(value: TResult, isSubscription: boolean, dependencies = defaultDependencies) => {
   const cacheKey = calculateCacheKey(relativePathToCwd, dependencies);
   getSSRCache()[cacheKey] = {
     result: value,
@@ -304,8 +304,12 @@ test('useSSRComputation_Client should update the results on dependencies change 
 
     emitNewValue(15);
     rerender();
+    // The "compute" function is not called again because the dependencies are the same
+    // The subscription callback will not have effect until the next render cycle, so the value still "10"
     expect(result.current).toBe(10);
 
+    // The dependencies are changed, so the "compute" function is called again in the same render cycle
+    // So, the value is updated to "15" without waiting for the next render cycle
     rerender(50);
     expect(result.current).toBe(15);
 
@@ -313,5 +317,32 @@ test('useSSRComputation_Client should update the results on dependencies change 
     await waitForNextUpdate();
     expect(result.current).toBe(20);
     await expectNoRerender();
+  });
+});
+
+test('useSSRComputation_Client should handle dependencies change if the result is cached', async () => {
+  cacheValue(5, true, defaultDependencies);
+  cacheValue(10, true, [50]);
+  await runBaseMemoryLeakTest(15, {alreadyCached: true, cachedValue: 5}, async (testUtils) => {
+    const { rerender, waitForNextUpdate, result, emitNewValue, expectNoRerender, computationLoaded } = testUtils;
+    expect(computationLoaded.current).toBe(false);
+
+    rerender(50);
+    expect(result.current).toBe(10);
+    expect(computationLoaded.current).toBe(false);
+    await expectNoRerender();
+
+    emitNewValue(20);
+    expect(result.current).toBe(10);
+    expect(computationLoaded.current).toBe(false);
+    await expectNoRerender();
+
+    fetchSubscriptions();
+    await waitForNextUpdate();
+    expect(result.current).toBe(20);
+
+    emitNewValue(25);
+    rerender();
+    expect(result.current).toBe(25);
   });
 });
