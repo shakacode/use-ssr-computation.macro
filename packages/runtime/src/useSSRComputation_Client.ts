@@ -3,6 +3,8 @@ import {
   calculateCacheKey,
   ClientComputationFunction,
   Dependency,
+  NoResult,
+  NoResultType,
   Options,
   parseDependencies,
   SSRComputationModule,
@@ -11,8 +13,6 @@ import {
 import { wrapErrorHandler } from "./errorHandler";
 import { getSSRCache } from "./ssrCache";
 import { runOnSubscriptionsResumed } from "./subscriptions";
-
-const NoResult = Symbol('NoResult');
 
 type ClientState<TResult> = {
   module?: SSRComputationModule<TResult>,
@@ -34,8 +34,8 @@ class ComputationExecutor<TResult> {
   handleSubscriptionIfModuleLoaded = ({ recomputeTheResult }: { recomputeTheResult: boolean }) => {
     if (this.isDisposed || !this.state.module) return;
 
-    const updateResult = (newResult: TResult) => {
-      if (this.isDisposed || this.state.currentResult === newResult) return;
+    const updateResult = (newResult: TResult | NoResultType) => {
+      if (this.isDisposed || this.state.currentResult === newResult || newResult === NoResult) return;
       this.updateResult(newResult);
     }
 

@@ -1,10 +1,5 @@
 import { wrapErrorHandler } from "./errorHandler";
-import {
-  calculateCacheKey,
-  Dependency,
-  Options,
-  ServerComputationFunction,
-} from "./utils";
+import { calculateCacheKey, Dependency, NoResult, Options, ServerComputationFunction } from "./utils";
 import { getSSRCache } from "./ssrCache";
 
 const useSSRComputation_Server = <TResult>(
@@ -17,6 +12,9 @@ const useSSRComputation_Server = <TResult>(
   if (options.skip) return null;
 
   const result = computationModule.compute(...dependencies);
+  if (result === NoResult) {
+    throw new Error('The SSR Computation module must return a result on server side');
+  }
   // relativePathToCwd is used to make sure that the cache key is unique for each module
   // and it's not affected by the file that calls it
   const cacheKey = calculateCacheKey(relativePathToCwd, dependencies);

@@ -4,6 +4,9 @@ export type Options = {
   skip?: boolean,
 };
 
+export const NoResult = Symbol("NoResult");
+export type NoResultType = typeof NoResult;
+
 export function isDependency(element: any): element is Dependency {
   return typeof element === 'number' || typeof element === 'string' || (typeof element === 'object' && element.uniqueId !== undefined);
 }
@@ -38,7 +41,7 @@ export const calculateCacheKey = (modulePath: string, dependencies: Dependency[]
 }
 
 export type SSRComputationModule<TResult> = {
-  compute: (...dependencies: Dependency[]) => TResult;
+  compute: (...dependencies: Dependency[]) => TResult | NoResultType;
   subscribe?: (getCurrentResult: () => TResult, next: (result: TResult) => void, ...dependencies: Dependency[]) => Subscription;
 };
 export type ServerComputationFunction<TResult> = SSRComputationModule<TResult>;
@@ -56,13 +59,4 @@ export type ClientHook<TResult> = SSRComputationHook<TResult, ClientComputationF
 
 export type Subscription = {
   unsubscribe: () => void;
-}
-
-export type Observer<TResult> = {
-  next: (value: TResult) => void;
-}
-
-export type Observable<T> = {
-  current: T | null;
-  subscribe: (observer: Observer<T>) => Subscription;
 }
