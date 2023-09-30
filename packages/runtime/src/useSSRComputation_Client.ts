@@ -45,7 +45,7 @@ class ComputationExecutor<TResult> {
         updateResult(fn(...this.dependencies));
       }
     }
-    const getCurrentResult = () => this.state.currentResult!;
+    const getCurrentResult = () => this.state.currentResult;
     this.subscription = this.state.module?.subscribe?.(getCurrentResult, updateResult, ...this.dependencies);
   }
 

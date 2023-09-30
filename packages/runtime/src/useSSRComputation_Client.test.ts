@@ -1,9 +1,11 @@
-import { renderHook } from '@testing-library/react-hooks';
-import useSSRComputation_Client from './useSSRComputation_Client';
+import { renderHook } from "@testing-library/react-hooks";
+import useSSRComputation_Client from "./useSSRComputation_Client";
 import {
   calculateCacheKey,
   ClientComputationFunction,
   Dependency,
+  NoResult,
+  NoResultType,
   SSRComputationModule,
 } from "./utils";
 import { getSSRCache, setSSRCache } from "./ssrCache";
@@ -29,7 +31,7 @@ setErrorHandler((error) => {
   throw error;
 });
 
-const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult): MemoryLeakGuardedComputationFunction<TResult> => {
+const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult | null | NoResultType): MemoryLeakGuardedComputationFunction<TResult> => {
   let called = { current: false };
   let currentParam1: number;
   let isSubscribed = { current: false };
@@ -78,13 +80,14 @@ const getMemoryLeakGuardedComputationFunction = <TResult>(defaultValue: TResult)
       if (isSubscribed.current) {
         throw new Error('Observable is not unsubscribed before the new call');
       }
-      if (getCurrentResult() !== currentResult) {
+      if (currentResult !== NoResult && getCurrentResult() !== currentResult) {
         throw new Error('The current result is not the same as the last computed result');
       }
       isSubscribed.current = true;
       nextFn = next;
 
       setTimeout(() => {
+        if (currentResult === NoResult || currentResult === null) return;
         next(currentResult);
       }, 0);
 
@@ -149,7 +152,7 @@ const runBaseMemoryLeakTest = async <TResult>(
   // if the value is already cached, it should returned in the first call and not wait for the next update
   expect(result.current).toBe(alreadyCached ? cachedValue : null);
 
-  if (defaultValue != null && !alreadyCached) {
+  if (defaultValue !== null && defaultValue !== NoResult && !alreadyCached) {
     await waitForNextUpdate();
     expect(result.current).toBe(defaultValue);
   }
@@ -189,6 +192,10 @@ test('useSSRComputation_Client should load the subscription function and return 
 
 test("useSSRComputation_Client doesn't rerender if the subscription didn't emit any values and the compute returns null", async () => {
   await runBaseMemoryLeakTest(null, {});
+});
+
+test("useSSRComputation_Client doesn't rerender if the subscription didn't emit any values and the compute returns NoResult", async () => {
+  await runBaseMemoryLeakTest(NoResult, {});
 });
 
 test('useSSRComputation_Client updates the subscription result in one render cycle', async () => {
