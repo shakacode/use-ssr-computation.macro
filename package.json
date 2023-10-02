@@ -1,9 +1,9 @@
 {
-  "name": "use-ssr-computation",
+  "name": "@shakacode/use-ssr-computation",
   "version": "1.0.3",
   "license": "MIT",
   "scripts": {
-    "publish": "lerna publish from-package --yes",
+    "publish": "lerna publish --ignore-changes '**/*.md' '**/test/*' '**/__snapshots__/*' '**/*.test.{ts,tsx,js,jsx}'",
     "changed": "lerna changed --ignore-changes '**/*.md' '**/test/*' '**/__snapshots__/*' '**/*.test.{ts,tsx,js,jsx}'",
     "version": "lerna version --no-push --ignore-changes '**/*.md' '**/test/*' '**/__snapshots__/*' '**/*.test.{ts,tsx,js,jsx}'",
     "yalc": "cd packages/macro && yalc publish && yalc link && cd ../runtime && yalc publish && yalc link",

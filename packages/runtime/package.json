@@ -1,5 +1,5 @@
 {
-  "name": "@popmenu/use-ssr-computation.runtime",
+  "name": "@shakacode/use-ssr-computation.runtime",
   "version": "2.0.0",
   "main": "lib/index.runtime.js",
   "types": "lib/index.runtime.d.ts",
