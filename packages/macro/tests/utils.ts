@@ -3,7 +3,7 @@ const plugin = require("babel-plugin-macros");
 
 export function pluginTest(testName: string, testBody: any, testDescription: string | null = null) {
   ['server', 'client'].forEach((side) => {
-    console.log(pluginTester({
+    pluginTester({
       pluginOptions: {
         useSSRComputation: { side },
       },
@@ -16,6 +16,6 @@ export function pluginTest(testName: string, testBody: any, testDescription: str
       tests: {
         [`${side}-${testDescription || testName}`]: testBody,
       },
-    }));
+    });
   });
 }

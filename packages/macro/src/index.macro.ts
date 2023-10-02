@@ -15,7 +15,7 @@ function getProgramPath (nodePath: NodePath): NodePath<t.Program> {
   return programPath;
 }
 
-function addImportStatement(importName: string, importPath: string, isDefault: boolean, nodePath: NodePath) {
+function addImportStatement(importName: string, importPath: string, isDefault: boolean, isNamespace: boolean, nodePath: NodePath) {
   const programPath = getProgramPath(nodePath);
 
   const existingImportDeclaration = programPath.node.body.find(
@@ -27,6 +27,8 @@ function addImportStatement(importName: string, importPath: string, isDefault: b
 
       if (isDefault) {
         return p.specifiers.some(specifier => t.isImportDefaultSpecifier(specifier) && specifier.local.name === importName);
+      } else if (isNamespace) {
+        return p.specifiers.some(specifier => t.isImportNamespaceSpecifier(specifier) && specifier.local.name === importName);
       } else {
         return p.specifiers.some(specifier => t.isImportSpecifier(specifier) && specifier.local.name === importName);
       }
@@ -38,6 +40,8 @@ function addImportStatement(importName: string, importPath: string, isDefault: b
 
     if(isDefault) {
       importDeclarator = t.importDefaultSpecifier(t.identifier(importName));
+    } else if (isNamespace) {
+      importDeclarator = t.importNamespaceSpecifier(t.identifier(importName));
     } else {
       importDeclarator = t.importSpecifier(t.identifier(importName), t.identifier(importName));
     }
@@ -45,7 +49,7 @@ function addImportStatement(importName: string, importPath: string, isDefault: b
     const newImportDeclaration = t.importDeclaration(
       [importDeclarator],
       t.stringLiteral(importPath),
-    );      
+    );
     programPath.node.body.unshift(newImportDeclaration);
   }
 }
@@ -85,14 +89,14 @@ const macro: MacroHandler = ({ references, state }) => {
   (references.useSSRComputation || []).map((nodePath: NodePath) => {
     const parent = nodePath.parent;
     if (t.isCallExpression(parent)) {
-      if (parent.arguments.length < 2) { 
+      if (parent.arguments.length < 2) {
         throw new Error("useSSRComputation must be called with at least two arguments: a path to a .ssr-computation.js file containing the definition of the funciton and array of dependencies.");
       }
 
       if (parent.arguments.length > 3) {
         throw new Error("useSSRComputation must be called with at most three arguments: a path to a .ssr-computation.js file containing the definition of the funciton, array of dependencies and options object.");
       }
-  
+
       const filenameNode = parent.arguments.shift();
       const optionsNode = parent.arguments.length === 2 ? parent.arguments.pop() : t.objectExpression([]);
 
@@ -118,10 +122,10 @@ const macro: MacroHandler = ({ references, state }) => {
         throw new Error(`The file ${filenameNode}(.js/.ts/.jsx/.tsx) does not exist.`);
       }
 
-      const useSSRComputationFunctionName = `useSSRComputation_${side.charAt(0).toUpperCase() + side.slice(1)}`; 
+      const useSSRComputationFunctionName = `useSSRComputation_${side.charAt(0).toUpperCase() + side.slice(1)}`;
       parent.callee = t.identifier(useSSRComputationFunctionName);
-      addImportStatement(useSSRComputationFunctionName, `@popmenu/use-ssr-computation.runtime/lib/${useSSRComputationFunctionName}`, true, nodePath);
-      
+      addImportStatement(useSSRComputationFunctionName, `@popmenu/use-ssr-computation.runtime/lib/${useSSRComputationFunctionName}`, true, false, nodePath);
+
       if (side === 'server')
       {
         let importedFunctionName = filenameNode.value;
@@ -133,7 +137,7 @@ const macro: MacroHandler = ({ references, state }) => {
         importedFunctionName = importedFunctionName.replace(delimeter, '');
         importedFunctionName = importedFunctionName.replace(/[^a-zA-Z0-9]/g, '_');
 
-        addImportStatement(importedFunctionName, filenameNode.value, true, nodePath);
+        addImportStatement(importedFunctionName, filenameNode.value, false, true, nodePath);
 
         const identifier = t.identifier(importedFunctionName);
         parent.arguments.unshift(identifier);
@@ -160,7 +164,7 @@ const macro: MacroHandler = ({ references, state }) => {
             ),
           ]),
         );
-        
+
         const programPath = getProgramPath(nodePath);
         programPath.node.body.unshift(dynamicImportFunction);
         parent.arguments.unshift(dynamicImportFunctionName);

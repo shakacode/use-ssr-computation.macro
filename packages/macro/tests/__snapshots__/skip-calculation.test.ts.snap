@@ -56,7 +56,7 @@ const x = useSSRComputation("./a.ssr-computation", [], { skip, webpackChunkName:
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
-import __a from "./a.ssr-computation";
+import * as __a from "./a.ssr-computation";
 import useSSRComputation_Server from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Server";
 const skip = true;
 const x = useSSRComputation_Server(

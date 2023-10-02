@@ -1,6 +1,6 @@
 {
   "name": "@popmenu/use-ssr-computation.macro",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "main": "lib/index.macro.js",
   "types": "lib/index.macro.d.ts",
   "license": "MIT",
@@ -26,7 +26,7 @@
   },
   "author": "Roman Kuksin <rkuksin.cpp@gmail.com>",
   "dependencies": {
-    "@popmenu/use-ssr-computation.runtime": "^1.1.5",
+    "@popmenu/use-ssr-computation.runtime": "^2.0.0",
     "babel-plugin-macros": "^3.0.0"
   },
   "devDependencies": {

@@ -4,6 +4,9 @@ export type Options = {
   skip?: boolean,
 };
 
+export const NoResult = Symbol("NoResult");
+export type NoResultType = typeof NoResult;
+
 export function isDependency(element: any): element is Dependency {
   return typeof element === 'number' || typeof element === 'string' || (typeof element === 'object' && element.uniqueId !== undefined);
 }
@@ -21,29 +24,39 @@ export function parseDependencies(dependencies: any): Dependency[] {
   });
 }
 
+const mapDependencyToValue = (dependency: Dependency): string => {
+  if (typeof dependency === 'number') {
+    return dependency.toString();
+  }
+  if (typeof dependency === 'string') {
+    return dependency;
+  }
+  return dependency.uniqueId;
+}
+
 export const calculateCacheKey = (modulePath: string, dependencies: Dependency[]): string => {
-  const dependenciesString = dependencies.map((dependency) => {
-    if (typeof dependency === 'number') {
-      return dependency.toString();
-    }
-    if (typeof dependency === 'string') {
-      return dependency;
-    }
-    return dependency.uniqueId;
-  }).join(',');
+  const dependenciesString = dependencies.map(mapDependencyToValue).join(',');
 
   return `${modulePath}::${dependenciesString}`;
 }
 
-export type ServerComputationFunction = (...dependencies: any[]) => any;
-export type ClientComputationFunction = () => Promise<{ default: (...dependencies: any[]) => any }>
+export type SSRComputationModule<TResult> = {
+  compute: (...dependencies: Dependency[]) => TResult | NoResultType;
+  subscribe?: (getCurrentResult: () => TResult | null, next: (result: TResult) => void, ...dependencies: Dependency[]) => Subscription;
+};
+export type ServerComputationFunction<TResult> = SSRComputationModule<TResult>;
+export type ClientComputationFunction<TResult> = () => Promise<SSRComputationModule<TResult>>
 
-export type SSRComputationFunction<Fn extends ServerComputationFunction | ClientComputationFunction> = (
+export type SSRComputationHook<TResult, Fn extends ServerComputationFunction<TResult> | ClientComputationFunction<TResult>> = (
   fn: Fn,
-  dependencies: any[],
-  options: any,
+  dependencies: Dependency[],
+  options: Options,
   relativePathToCwd: string
-) => any;
+) => TResult | null;
 
-export type ServerFunction = SSRComputationFunction<ServerComputationFunction>;
-export type ClientFunction = SSRComputationFunction<ClientComputationFunction>;
+export type ServerHook<TResult> = SSRComputationHook<TResult, ServerComputationFunction<TResult>>;
+export type ClientHook<TResult> = SSRComputationHook<TResult, ClientComputationFunction<TResult>>;
+
+export type Subscription = {
+  unsubscribe: () => void;
+}
