@@ -1,3 +1,3 @@
-#!/bin/sh
+#!/bin/bash
 
-yarn run publish
+scripts/lerna publish $1

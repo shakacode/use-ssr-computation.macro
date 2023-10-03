@@ -3,9 +3,9 @@
   "version": "1.0.3",
   "license": "MIT",
   "scripts": {
-    "publish": "lerna publish --ignore-changes '**/*.md' '**/test/*' '**/__snapshots__/*' '**/*.test.{ts,tsx,js,jsx}'",
-    "changed": "lerna changed --ignore-changes '**/*.md' '**/test/*' '**/__snapshots__/*' '**/*.test.{ts,tsx,js,jsx}'",
-    "version": "lerna version --no-push --ignore-changes '**/*.md' '**/test/*' '**/__snapshots__/*' '**/*.test.{ts,tsx,js,jsx}'",
+    "publish": "./scripts/release",
+    "changed": "./scripts/ls-changed-packages",
+    "version": "./scripts/version",
     "yalc": "cd packages/macro && yalc publish && yalc link && cd ../runtime && yalc publish && yalc link",
     "test": "cd packages/macro && yarn test && cd ../runtime && yarn test"
   },
