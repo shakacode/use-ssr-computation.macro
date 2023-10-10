@@ -24,7 +24,7 @@ function _dynamicImport_() {
     /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
   );
 }
-import useSSRComputation_Client from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Client";
+import useSSRComputation_Client from "@shakacode/use-ssr-computation.runtime/lib/useSSRComputation_Client";
 const x = useSSRComputation_Client(
   _dynamicImport_,
   [],
@@ -48,7 +48,7 @@ function _dynamicImport_() {
     /* webpackChunkName: "custom-chunk-name-ssr-computations" */ "./a.ssr-computation"
   );
 }
-import useSSRComputation_Client from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Client";
+import useSSRComputation_Client from "@shakacode/use-ssr-computation.runtime/lib/useSSRComputation_Client";
 const x = useSSRComputation_Client(
   _dynamicImport_,
   [],
@@ -78,7 +78,7 @@ function _dynamicImport_() {
     /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
   );
 }
-import useSSRComputation_Client from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Client";
+import useSSRComputation_Client from "@shakacode/use-ssr-computation.runtime/lib/useSSRComputation_Client";
 const x = useSSRComputation_Client(
   _dynamicImport_,
   [],
@@ -126,7 +126,7 @@ function _dynamicImport_2() {
     /* webpackChunkName: "default-ssr-computations" */ "./a.ssr-computation"
   );
 }
-import useSSRComputation_Client from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Client";
+import useSSRComputation_Client from "@shakacode/use-ssr-computation.runtime/lib/useSSRComputation_Client";
 import React from "react";
 const ReactComponent = () => {
   const x = useSSRComputation_Client(
@@ -161,7 +161,7 @@ const x = useSSRComputation("./a.ssr-computation", []);
       ↓ ↓ ↓ ↓ ↓ ↓
 
 import * as __a from "./a.ssr-computation";
-import useSSRComputation_Server from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Server";
+import useSSRComputation_Server from "@shakacode/use-ssr-computation.runtime/lib/useSSRComputation_Server";
 const x = useSSRComputation_Server(__a, [], {}, "tests/a.ssr-computation");
 
 `;
@@ -176,7 +176,7 @@ const x = useSSRComputation("./a.ssr-computation", [], { webpackChunkName: "cust
       ↓ ↓ ↓ ↓ ↓ ↓
 
 import * as __a from "./a.ssr-computation";
-import useSSRComputation_Server from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Server";
+import useSSRComputation_Server from "@shakacode/use-ssr-computation.runtime/lib/useSSRComputation_Server";
 const x = useSSRComputation_Server(__a, [], {}, "tests/a.ssr-computation");
 
 `;
@@ -193,7 +193,7 @@ const y = useSSRComputation("./b.ssr-computation", [])
 
 import * as __b from "./b.ssr-computation";
 import * as __a from "./a.ssr-computation";
-import useSSRComputation_Server from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Server";
+import useSSRComputation_Server from "@shakacode/use-ssr-computation.runtime/lib/useSSRComputation_Server";
 const x = useSSRComputation_Server(__a, [], {}, "tests/a.ssr-computation");
 const y = useSSRComputation_Server(__b, [], {}, "tests/b.ssr-computation");
 
@@ -227,7 +227,7 @@ const ReactComponent = () => {
       ↓ ↓ ↓ ↓ ↓ ↓
 
 import * as __a from "./a.ssr-computation";
-import useSSRComputation_Server from "@popmenu/use-ssr-computation.runtime/lib/useSSRComputation_Server";
+import useSSRComputation_Server from "@shakacode/use-ssr-computation.runtime/lib/useSSRComputation_Server";
 import React from "react";
 const ReactComponent = () => {
   const x = useSSRComputation_Server(__a, [], {}, "tests/a.ssr-computation");

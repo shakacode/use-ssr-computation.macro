@@ -1,0 +1,3 @@
+#!/bin/bash
+
+yarn run lerna "$@" --ignore-changes '**/*.md' '**/scripts/**' '**/test/*' '**/__snapshots__/*' '**/*.test.{ts,tsx,js,jsx}'

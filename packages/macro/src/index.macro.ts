@@ -3,7 +3,7 @@ import { NodePath } from "@babel/core";
 import * as path from "path";
 import * as fs from "fs";
 import * as t from "@babel/types";
-import { Dependency } from "@popmenu/use-ssr-computation.runtime/src/utils"
+import { Dependency } from "@shakacode/use-ssr-computation.runtime/src/utils"
 
 import { extractMacroOptions, Options } from './utils';
 
@@ -124,7 +124,7 @@ const macro: MacroHandler = ({ references, state }) => {
 
       const useSSRComputationFunctionName = `useSSRComputation_${side.charAt(0).toUpperCase() + side.slice(1)}`;
       parent.callee = t.identifier(useSSRComputationFunctionName);
-      addImportStatement(useSSRComputationFunctionName, `@popmenu/use-ssr-computation.runtime/lib/${useSSRComputationFunctionName}`, true, false, nodePath);
+      addImportStatement(useSSRComputationFunctionName, `@shakacode/use-ssr-computation.runtime/lib/${useSSRComputationFunctionName}`, true, false, nodePath);
 
       if (side === 'server')
       {

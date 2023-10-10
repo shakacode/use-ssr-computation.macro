@@ -1,21 +1,21 @@
 {
-  "name": "use-ssr-computation",
+  "name": "@shakacode/use-ssr-computation",
   "version": "1.0.3",
   "license": "MIT",
   "scripts": {
-    "publish": "lerna publish from-package --yes",
-    "changed": "lerna changed --ignore-changes '**/*.md' '**/test/*' '**/__snapshots__/*' '**/*.test.{ts,tsx,js,jsx}'",
-    "version": "lerna version --no-push --ignore-changes '**/*.md' '**/test/*' '**/__snapshots__/*' '**/*.test.{ts,tsx,js,jsx}'",
+    "publish": "./scripts/release",
+    "changed": "./scripts/ls-changed-packages",
+    "version": "./scripts/version",
     "yalc": "cd packages/macro && yalc publish && yalc link && cd ../runtime && yalc publish && yalc link",
     "test": "cd packages/macro && yarn test && cd ../runtime && yarn test"
   },
-  "homepage": "https://github.com/Popmenu/use-ssr-computation.macro",
+  "homepage": "https://github.com/shakacode/use-ssr-computation.macro",
   "bugs": {
-    "url": "https://github.com/Popmenu/use-ssr-computation.macro/issues"
+    "url": "https://github.com/shakacode/use-ssr-computation.macro/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Popmenu/use-ssr-computation.macro.git"
+    "url": "https://github.com/shakacode/use-ssr-computation.macro.git"
   },
   "author": "Roman Kuksin <rkuksin.cpp@gmail.com>",
   "keywords": [

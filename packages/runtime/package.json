@@ -1,5 +1,5 @@
 {
-  "name": "@popmenu/use-ssr-computation.runtime",
+  "name": "@shakacode/use-ssr-computation.runtime",
   "version": "2.0.0",
   "main": "lib/index.runtime.js",
   "types": "lib/index.runtime.d.ts",
@@ -15,13 +15,13 @@
   "files": [
     "lib"
   ],
-  "homepage": "https://github.com/Popmenu/use-ssr-computation.macro",
+  "homepage": "https://github.com/shakacode/use-ssr-computation.macro",
   "bugs": {
-    "url": "https://github.com/Popmenu/use-ssr-computation.macro/issues"
+    "url": "https://github.com/shakacode/use-ssr-computation.macro/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Popmenu/use-ssr-computation.macro.git"
+    "url": "https://github.com/shakacode/use-ssr-computation.macro.git"
   },
   "author": "Roman Kuksin <rkuksin.cpp@gmail.com>",
   "peerDependencies": {

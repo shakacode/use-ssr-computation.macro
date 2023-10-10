@@ -1,0 +1,3 @@
+#!/bin/bash
+
+scripts/lerna version $1 --no-push

@@ -1,5 +1,5 @@
 {
-  "name": "@popmenu/use-ssr-computation.macro",
+  "name": "@shakacode/use-ssr-computation.macro",
   "version": "1.2.4",
   "main": "lib/index.macro.js",
   "types": "lib/index.macro.d.ts",
@@ -16,17 +16,17 @@
   "files": [
     "lib"
   ],
-  "homepage": "https://github.com/Popmenu/use-ssr-computation.macro",
+  "homepage": "https://github.com/shakacode/use-ssr-computation.macro",
   "bugs": {
-    "url": "https://github.com/Popmenu/use-ssr-computation.macro/issues"
+    "url": "https://github.com/shakacode/use-ssr-computation.macro/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Popmenu/use-ssr-computation.macro.git"
+    "url": "https://github.com/shakacode/use-ssr-computation.macro.git"
   },
   "author": "Roman Kuksin <rkuksin.cpp@gmail.com>",
   "dependencies": {
-    "@popmenu/use-ssr-computation.runtime": "^2.0.0",
+    "@shakacode/use-ssr-computation.runtime": "^2.0.0",
     "babel-plugin-macros": "^3.0.0"
   },
   "devDependencies": {
