@@ -8,7 +8,11 @@ Macro](https://img.shields.io/badge/babel--macro-%F0%9F%8E%A3-f5da55.svg?style=f
 
 [https://github.com/shakacode/use-ssr-computation.macro](https://github.com/shakacode/use-ssr-computation.macro)
 
-A Babel macro designed to offload computations to the server-side, with the results attached to the HTML as JSON. On the client-side, the macro mimics behaviors similar to React.useMemo, fetching results cached during Server-Side Rendering (SSR). This reduces client-side bundle size by eliminating unnecessary code and library imports. Similar to ***React Server Components (RSC)*** but requires less refactoring.
+A Babel macro designed to offload computations to the server-side, with the results attached to the HTML as JSON.
+
+On the client-side, the macro mimics the behavior of `React.useMemo`, fetching results cached during Server-Side Rendering (SSR). This reduces client-side bundle size by eliminating unnecessary code and library imports.
+
+It's similar to ***React Server Components (RSC)*** but requires less refactoring.
 
 ## 📌 Table of Contents
 
@@ -27,15 +31,33 @@ In the modern web ecosystem, performance is king. With `use-ssr-computation.macr
 
 ## Usage
 The `useSSRComputation` macro is used to execute code on the server-side and cache the result for the client-side.
-It takes two required arguments:
+
+**Arguments:**
 - `path` - the path to the file that contains the code to be executed on the server-side.
 - `dependencies` - an array of dependencies that will be passed as arguments to the function in the `path` file.
+- `options` - SSR computation options object. It can contain the following options:
+  - `webpackChunkName` - the name of the webpack chunk that will be created for the SSR computation file. It's useful for code splitting. If not provided, the default chunk name will be `default-ssr-computations`.
+  - `skip` - a boolean value that indicates whether the SSR computation should be skipped or not. It's useful for development purposes. If not provided, the default value will be `false`. It's necessary because `React hooks` can't be called conditionally. Instead, we can use the `skip` option to skip the SSR computation until needed.
+
+**Return Value:**
+- The return value of the `useSSRComputation` hook is the result of the server-side computation. It will be `null` if the computation hasn't been executed yet (skipped or still downloading the SSR computation file).
 
 ## Basic Usage
 Simply put, execute computations on the server, cache the result, and make it available on the client-side.
 
 ### Your Computation File
-Each computation file should at least export a compute function:
+The computation file must export a function named `compute` that takes t
+
+The `compute` function must be a `sync` function and it must returns a result that can be serialized. It can't return a function or a class.
+
+**Dependencies**
+Each dependency should be of the dependency type:
+
+```typescript
+type Dependency = string | number | { uniqueId: string };
+```
+You can pass either the primitive types `string` and `number` or any other object that has a `uniqueId` property of type `string`.
+This is necessary to serialize the dependencies and pass them to the client-side. The `uniqueId` is used to serialize the dependency and to compare it with the client-side dependency.
 
 ```javascript
 // someLogic.ssr-computation.js
@@ -80,7 +102,7 @@ export const compute = (birthdate) => {
 ```javascript
 // App.js
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { useSSRComputation } from "use-ssr-computation.macro";
 
 const App = () => {
@@ -101,13 +123,20 @@ const App = () => {
 
 export default App;
 ```
-The `luxon` package is included on server-budle and executed on the server side, passing the formatted date to the client side. If the user change their birthdate on the client side, the `ssr-computation file` will be dynamically loaded on the client side, execute it, and return the updated result.
+The `luxon` package is included on server-budle and executed on the server side. The formatted date is passed to the client side.
+If the user changes their birthdate on the client side, the SSR computation file will be dynamically loaded on the client side, execute it, and return the updated result.
 
 ## Subscriptions Feature
 The macro now supports a "subscription" mechanism. This allows dynamic computations that can update over time.
 
 ### Computation File with Subscription
-Your computation file should have the usual compute function and an additional subscribe function if it supports dynamic updates:
+Your computation file should have the usual `compute` function and an additional `subscribe` function if it supports dynamic updates:
+
+The subscription function will only be called on the client side. Only in the following cases:
+- The computation is not cached before (there is a cache miss).
+- The `fetchSubscriptions` function is called. In this case, all SSR computaiton files are downloaded and executed.
+
+**The `compute` function will be called first and then the `subscribe` function.**
 ```javascript
 export const compute = () => {
   // computation logic
@@ -122,6 +151,9 @@ export const subscribe = (getCurrentResult, next, ...dependencies) => {
   };
 };
 ```
+
+- `getCurrentResult` function returns the last result returned by the computation. It will return null if the computation hasn't been executed yet (not cached before and the `compute` function returned `NoResult`).
+- `next` function is used to update the result. It takes one argument which is the new result.
 
 ### Using Subscriptions in Your App
 After a computation is initially fetched, you can subscribe to updates using the fetchSubscriptions function:
@@ -157,7 +189,10 @@ export const subscribe = (getCurrentResult, next) => {
   if (timerId) clearInterval(timerId);
 
   timerId = setInterval(() => {
-    next(DateTime.now().toLocaleString(DateTime.TIME_SIMPLE));
+    const newValue = compute();
+    if (newValue !== getCurrentResult()) {
+      next(newValue);
+    }
   }, 60000);  // Update every minute
 
   return {
@@ -171,7 +206,7 @@ export const subscribe = (getCurrentResult, next) => {
 ```javascript
 // App.js
 
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import { useSSRComputation, fetchSubscriptions } from "use-ssr-computation.macro";
 
 const App = () => {
@@ -195,7 +230,7 @@ const App = () => {
 export default App;
 ```
 
-The `luxon` package and the associated computation module are not loaded immediately, thereby optimizing initial page load times. Only after 1 minute (when the `fetchSubscriptions` function is called) will the library and module be dynamically loaded and the subscription set up to update the time.
+The computation module and the `luxon` package are not loaded immediately, thereby optimizing initial page load times. Only after 1 minute (when the `fetchSubscriptions` function is called) will the library and module be dynamically loaded and the subscription set up to update the time.
 
 With this mechanism, we've effectively lazy-loaded our time formatting operation, deferring the load of `luxon` and ensuring minimal performance impact during the critical initial page render.
 
@@ -263,6 +298,15 @@ import { getSSRCache } from "use-ssr-computation.macro";
     `,
   }}
 />
+```
+
+If you are using `Typescript`, don't forget to add `__SSR_COMPUTATION_CACHE` to the `Window` interface:
+```typescript
+import { SSRCache } from "use-ssr-computation.macro";
+
+interface Window {
+  __SSR_COMPUTATION_CACHE: SSRCache;
+}
 ```
 
 ### Hydrate the SSR Computation Cache on the Client
