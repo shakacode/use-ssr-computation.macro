@@ -65,7 +65,7 @@ This is necessary to serialize the dependencies and pass them to the client-side
 import { NoResult } from "use-ssr-computation.runtime";
 
 // someLogic.ssr-computation.js
-export const compute = <TResult>(...dependencies: Dependency[]): TResult | (typeof NoResult) => {
+export const compute = <TResult>(...dependencies: Dependency[]): TResult | typeof NoResult => {
 // Your server-side computation logic here
 };
 ```
