@@ -50,6 +50,8 @@ The computation file must export a function named `compute` that takes the depen
 
 The `compute` function must be a `sync` function and it must returns a result that can be serialized. It can't return a function or a class.
 
+The `compute` function can return `NoResult` if the computation is not ready yet. In this case, the `useSSRComputation` hook will return the last result cached or it will return `null` if no result is cached before.
+
 **Dependencies**
 Each dependency should be of the dependency type:
 
@@ -60,8 +62,10 @@ You can pass either the primitive types `string` or `number` or any other object
 This is necessary to serialize the dependencies and pass them to the client-side. The `uniqueId` is used to serialize the dependency and to compare it with the client-side dependency.
 
 ```javascript
+import { NoResult } from "use-ssr-computation.runtime";
+
 // someLogic.ssr-computation.js
-export const compute = () => {
+export const compute = <TResult>(...dependencies: Dependency[]): TResult | (typeof NoResult) => {
 // Your server-side computation logic here
 };
 ```
@@ -152,7 +156,7 @@ export const subscribe = (getCurrentResult, next, ...dependencies) => {
 };
 ```
 
-- `getCurrentResult` function returns the last result returned by the computation. It will return null if the computation hasn't been executed yet (not cached before and the `compute` function returned `NoResult`).
+- `getCurrentResult` function returns the last result returned by the computation. It will return `null` if the computation hasn't been executed yet (not cached before and the `compute` function returned `NoResult`).
 - `next` function is used to update the result. It takes one argument which is the new result.
 
 ### Using Subscriptions in Your App
@@ -207,7 +211,8 @@ export const subscribe = (getCurrentResult, next) => {
 // App.js
 
 import React, { useEffect } from "react";
-import { useSSRComputation, fetchSubscriptions } from "use-ssr-computation.macro";
+import { useSSRComputation } from "use-ssr-computation.macro";
+import { fetchSubscriptions } from "use-ssr-computation.runtime";
 
 const App = () => {
   const formattedTime = useSSRComputation("./formattedTime.ssr-computation");
@@ -287,7 +292,7 @@ yarn add babel-plugin-macros @shakacode/use-ssr-computation.macro @shakacode/use
 Add the following to your returned HTML from the server **after rendering your React app**:
 
 ```javascript
-import { getSSRCache } from "use-ssr-computation.macro";
+import { getSSRCache } from "use-ssr-computation.runtime";
 ```
 
 ```HTML
@@ -302,7 +307,7 @@ import { getSSRCache } from "use-ssr-computation.macro";
 
 If you are using `Typescript`, don't forget to add `__SSR_COMPUTATION_CACHE` to the `Window` interface:
 ```typescript
-import { SSRCache } from "use-ssr-computation.macro";
+import { SSRCache } from "use-ssr-computation.runtime";
 
 interface Window {
   __SSR_COMPUTATION_CACHE: SSRCache;
@@ -313,7 +318,7 @@ interface Window {
 Add the following to your client-side entry file **before rendering your React app**:
 
 ```javascript
-import { setSSRCache } from "use-ssr-computation.macro";
+import { setSSRCache } from "use-ssr-computation.runtime";
 
 const cache = window.__SSR_COMPUTATION_CACHE;
 if (cache) {
