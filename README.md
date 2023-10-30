@@ -37,7 +37,7 @@ The `useSSRComputation` macro is used to execute code on the server-side and cac
 - `dependencies` - an array of dependencies that will be passed as arguments to the function in the `path` file.
 - `options` - SSR computation options object. It can contain the following options:
   - `webpackChunkName` - the name of the webpack chunk that will be created for the SSR computation file. It's useful for code splitting. If not provided, the default chunk name will be `default-ssr-computations`.
-  - `skip` - a boolean value that indicates whether the SSR computation should be skipped or not. It's useful for development purposes. If not provided, the default value will be `false`. It's necessary because `React hooks` can't be called conditionally. Instead, we can use the `skip` option to skip the SSR computation until needed.
+  - `skip` - a boolean value that indicates whether the SSR computation should be skipped or not. It's useful for development purposes. If not provided, the default value will be `false`. It's necessary because React hooks can't be called conditionally. Instead, we can use the `skip` option to skip the SSR computation until needed.
 
 **Return Value:**
 - The return value of the `useSSRComputation` hook is the result of the server-side computation. It will be `null` if the computation hasn't been executed yet (skipped or still downloading the SSR computation file).
@@ -46,7 +46,7 @@ The `useSSRComputation` macro is used to execute code on the server-side and cac
 Simply put, execute computations on the server, cache the result, and make it available on the client-side.
 
 ### Your Computation File
-The computation file must export a function named `compute` that takes t
+The computation file must export a function named `compute` that takes the dependencies as arguments and returns the result of the computation.
 
 The `compute` function must be a `sync` function and it must returns a result that can be serialized. It can't return a function or a class.
 
@@ -56,7 +56,7 @@ Each dependency should be of the dependency type:
 ```typescript
 type Dependency = string | number | { uniqueId: string };
 ```
-You can pass either the primitive types `string` and `number` or any other object that has a `uniqueId` property of type `string`.
+You can pass either the primitive types `string` or `number` or any other object that has a `uniqueId` property of type `string`.
 This is necessary to serialize the dependencies and pass them to the client-side. The `uniqueId` is used to serialize the dependency and to compare it with the client-side dependency.
 
 ```javascript
@@ -87,7 +87,7 @@ Smaller Client Bundles: Only the results are sent to the client, not the actual 
 Faster Initial Loads: Reduced JavaScript means faster parsing and execution times.
 
 ### Basic Example: Dynamic Date Formatting
-Utilize the `luxon` package to dynamically format a user's birthdate on the server side, ensuring the client-side bundle remains lightweight by loading the library only when the birthdate changes.
+Use the `luxon` package to dynamically format a user's birthdate on the server side, ensuring the client-side bundle remains lightweight by loading the library only when the birthdate changes.
 
 1- **Server-side computation** file named `./formatBirthDate.ssr-computation.js`:
 ```javascript
@@ -134,7 +134,7 @@ Your computation file should have the usual `compute` function and an additional
 
 The subscription function will only be called on the client side. Only in the following cases:
 - The computation is not cached before (there is a cache miss).
-- The `fetchSubscriptions` function is called. In this case, all SSR computaiton files are downloaded and executed.
+- The `fetchSubscriptions` function is called. In this case, all SSR computation files are downloaded and executed.
 
 **The `compute` function will be called first and then the `subscribe` function.**
 ```javascript
@@ -156,14 +156,14 @@ export const subscribe = (getCurrentResult, next, ...dependencies) => {
 - `next` function is used to update the result. It takes one argument which is the new result.
 
 ### Using Subscriptions in Your App
-After a computation is initially fetched, you can subscribe to updates using the fetchSubscriptions function:
+After a computation is initially fetched, you can subscribe to updates using the `fetchSubscriptions` function:
 ```javascript
 import { useSSRComputation, fetchSubscriptions } from "use-ssr-computation.macro";
 
 const result = useSSRComputation("./path-to-computeData.ssr-computation");
 ```
 
-When you want to start listening for changes, simply invoke fetchSubscriptions():
+When you want to start listening for changes, simply invoke `fetchSubscriptions()`:
 ```javascript
 fetchSubscriptions();
 ```
@@ -171,7 +171,7 @@ fetchSubscriptions();
 For more details about the subscriptions feature, please check the [subscriptions example with React On Rails Pro](https://www.shakacode.com/react-on-rails-pro/). Also, you can look at the [Add support for Subscriptions PR](https://github.com/shakacode/use-ssr-computation.macro/pull/70)
 
 ### Example with Subscriptions: Showing the current time
-A practical application of the macro with the new subscriptions feature is formatting and updating the current time every minute using the luxon library.
+A practical application of the macro with the new subscriptions feature is formatting and updating the current time every minute using the `luxon` library.
 
 1- **Server-side Computation with Subscription:**
 ```javascript
@@ -356,4 +356,4 @@ const x = useSSRComputation_Client(
 );
 ```
 
-**For more examples about the code transformation, please check the [snapshot tests](packages/macro/tests/__snapshots__)**
+**For more examples of the code transformation, please check the [snapshot tests](packages/macro/tests/__snapshots__)**
